@@ -34,3 +34,12 @@ Este é um sistema de gerenciamento de barbearia desenvolvido com **Django** e *
 
 5. **Inicie o servidor:**
     python manage.py runserver
+
+
+## 📸 Demonstração do Sistema
+
+### Tela de Login (Cliente / Barbeiro)
+![Tela de Login do Usuário/Barbeiro](screenshots/Tela_login.png)
+
+### Tela de Cadastro (Usuário)
+![Tela de Cadastro](screenshots/Tela_cadastro.png)
