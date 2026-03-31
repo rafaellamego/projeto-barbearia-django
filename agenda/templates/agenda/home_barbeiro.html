@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Barbeiro - Agenda Aí</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Reutilizando seu CSS de vidro roxo */
+        html { background-color: #0a0519; }
+        body {
+            background: linear-gradient(rgba(25,10,40,0.8), rgba(10,5,25,0.9)), url('{% static "fundo_barbearia.png" %}') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            color: white;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: rgba(40,20,60,0.3);
+            backdrop-filter: blur(25px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px 35px;
+            font-size: 1.1rem;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80vh;
+            padding: 20px;
+        }
+
+        .card-info {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 25px;
+            padding: 50px;
+            text-align: center;
+            max-width: 600px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        i { font-size: 3.5rem; margin-bottom: 20px; opacity: 0.7; }
+        h1 { margin-bottom: 10px; }
+        p { opacity: 0.8; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">Agenda Aí - Área do Profissional</div>
+
+    <div class="container">
+        <div class="card-info">
+            <i class="fas fa-cut"></i>
+            <h1>Bem-vindo ao seu Painel</h1>
+            <p>Olá! Este é o seu espaço de gerenciamento. <br> 
+               Em breve, aqui você encontrará sua lista de agendamentos, horários marcados e estatísticas de atendimento.</p>
+            
+            <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                <small style="opacity: 0.5;">Módulo de Gerenciamento em Desenvolvimento</small>
+            </div>
+            
+            <a href="{% url 'login' %}" style="color: white; display: block; margin-top: 20px; opacity: 0.6;">Sair do sistema</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,266 @@
+{% load static %} 
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - Agenda Aí</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+
+    /* ADICIONE ISSO AQUI: Evita o flash branco ao navegar ou recarregar */
+    html {
+        background-color: #0a0519; 
+    }
+    /* Configurações Gerais do Corpo - IDÊNTICO AO LOGIN */
+    body {
+        background: linear-gradient(rgba(25,10,40,0.75), rgba(10,5,25,0.85)), url('{% static "fundo_barbearia.png" %}') no-repeat center center fixed;
+        background-size: cover;
+        font-family: 'Arial', sans-serif;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        margin: 0;
+        color: white;
+        padding-bottom: 75px;
+    }
+
+    /* Barra Superior Estilo Vidro Roxo */
+    .top-bar {
+        background: rgba(40,20,60,0.3);
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 15px 35px;
+        font-size: 1.1rem;
+        font-weight: 300;
+        text-align: left; 
+        text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        width: 100%;
+        box-sizing: border-box;
+        letter-spacing: 0.5px;
+    }
+
+    .main-content {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start; 
+        padding-top: 90px; 
+        padding-bottom: 30px;
+    }
+
+    .login-container {
+        width: 100%;
+        max-width: 450px; 
+        display: flex;
+        justify-content: center;
+    }
+
+    /* O Cartão com borda branca espessa */
+    .login-card {
+        background: rgba(255, 255, 255, 0.05); 
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 2px solid rgba(255, 255,255,0.6);
+        border-radius: 25px;
+        padding: 10px 35px 40px 35px;
+        width: 100%;
+        box-sizing: border-box;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        text-align: center;
+    }
+
+    .logo-img {
+        width: 300px;
+        height: auto;
+        margin: 0 auto -40px auto;
+        display: block;
+        filter: drop-shadow(0 0 2px rgba(0,0,0,0.3));
+    }
+
+    h1 {
+        margin: 0;
+        padding: 0;
+        font-size: 2.3rem;
+        font-weight: 800;
+        color: white;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        line-height: 1.0;
+    }
+
+    .subtitle {
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 2px;
+        margin-top: 12px; 
+        margin-bottom: 25px;
+        opacity: 0.9;
+        display: block;
+    }
+
+    /* Campos de Entrada com Ícones */
+    .input-wrapper {
+        position: relative;
+        margin-bottom: 15px;
+    }
+
+    .input-wrapper i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(255,255,255,0.5);
+    }
+
+    .input-wrapper input {
+        width: 100%;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 10px;
+        padding: 15px 15px 15px 45px;
+        color: white;
+        font-size: 1rem;
+        box-sizing: border-box;
+        outline: none;
+        transition: 0.3s;
+    }
+
+    .input-wrapper input:focus {
+        border-color: rgba(255,255,255,0.5);
+        background: rgba(255,255,255,0.15);
+    }
+
+    /* Ajuste específico para o campo de data */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+        opacity: 0.5;
+    }
+
+    /* Botão Principal */
+    .btn-main {
+        background: #000;
+        color: white;
+        border: none;
+        width: 100%;
+        padding: 16px;
+        border-radius: 10px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: 0.3s;
+    }
+
+    .btn-main:hover { background: #1a1a1a; }
+
+    .back-link {
+        color: white;
+        display: block;
+        margin-top: 20px;
+        text-decoration: underline;
+        font-size: 0.85rem;
+        opacity: 0.7;
+    }
+
+    /* Rodapé Social Fixo */
+    .footer-social {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(10, 5, 20, 0.95);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 18px 0;
+        display: flex;
+        justify-content: center;
+        gap: 50px;
+        z-index: 1000;
+    }
+
+    .social-item {
+        color: white;
+        text-decoration: none;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        opacity: 0.8;
+        transition: 0.3s;
+    }
+
+    .social-item i {
+        font-size: 1.6rem;
+    }
+
+    .social-item:hover {
+        opacity: 1;
+        transform: translateY(-2px);
+    }
+
+    /* Mensagens Django */
+    .messages { list-style: none; padding: 0; margin-bottom: 15px; }
+    .error { background: rgba(255, 82, 82, 0.3); border: 1px solid #ff5252; padding: 10px; border-radius: 8px; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+
+    <div class="top-bar">Bem-vindo ao Agenda Aí, sua agenda eletrônica.</div>
+
+    <div class="main-content">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="brand-section">
+                    <img src="{% static 'logo_barber.png' %}" alt="Logo" class="logo-img">
+                    <h1>Cadastro</h1>
+                    <p class="subtitle">Crie sua conta para agendar</p>
+                </div>
+
+                {% if messages %}
+                  <ul class="messages">
+                    {% for message in messages %}
+                      <li class="{{ message.tags }}">{{ message }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="input-wrapper">
+                        <i class="fas fa-user"></i>
+                        <input type="text" name="nome" placeholder="Nome completo" value="{{ request.POST.nome }}" required>
+                    </div>
+                    <div class="input-wrapper">
+                        <i class="fas fa-phone"></i>
+                        <input type="text" name="telefone" placeholder="Telefone (DDD + número)" value="{{ request.POST.telefone }}" required>
+                    </div>
+                    <div class="input-wrapper">
+                        <i class="fas fa-calendar-alt"></i>
+                        <input type="date" name="data_nascimento" value="{{ request.POST.data_nascimento }}" title="Data de Nascimento" required>
+                    </div>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" name="senha" placeholder="Crie uma senha" required>
+                    </div>
+                    
+                    <button type="submit" class="btn-main">Finalizar Cadastro</button>
+                </form>
+
+                <a href="{% url 'login' %}" class="back-link">Já tem uma conta? Entrar</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-social">
+        <a href="https://instagram.com/suabarbearia" class="social-item" target="_blank">
+            <i class="fab fa-instagram"></i> @Univesp
+        </a>
+        <a href="https://wa.me/seunumerowhatsapp" class="social-item" target="_blank">
+            <i class="fab fa-whatsapp"></i> Contatos
+        </a>
+    </div>
+
+</body>
+</html>

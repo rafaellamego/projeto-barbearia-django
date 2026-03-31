@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+v調/
+venv/
+.venv/
+
+# Django
+local_settings.py
+db.sqlite3
+media/
+staticfiles/
+
+# Ambientes e Segredos
+.env
+.vscode/
+.idea/
+
+# MySQL (Caso tenha logs locais)
+*.log
+*.sql
