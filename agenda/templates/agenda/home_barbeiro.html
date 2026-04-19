@@ -7,6 +7,35 @@
     <title>Painel Barbeiro - Agenda Aí</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+
+/* Adicione dentro da tag <style> existente */
+
+.kanban-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 25px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+.kanban-column {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 20px;
+    width: 280px; 
+    min-height: 300px;
+}
+
+/* ... e as outras regras de .calendar-glass, .day, .time-slot, etc. */
+
+
+
+
+
+
         /* Reutilizando seu CSS de vidro roxo */
         html { background-color: #0a0519; }
         body {
@@ -48,24 +77,285 @@
         i { font-size: 3.5rem; margin-bottom: 20px; opacity: 0.7; }
         h1 { margin-bottom: 10px; }
         p { opacity: 0.8; line-height: 1.6; }
+
+
+
+        /* Layout Kanban */
+.kanban-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.kanban-column {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 20px;
+    padding: 15px;
+    min-height: 400px;
+}
+
+.column-header {
+    text-align: center;
+    padding-bottom: 15px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.7;
+}
+
+.kanban-item {
+    margin-bottom: 15px;
+    cursor: grab;
+}
+
+.kanban-item.done {
+    opacity: 0.5;
+    border-left-color: #10b981;
+}
+
+/* Estilo do Calendário */
+.calendar-glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 20px;
+    width: 280px;
+    margin-bottom: 30px;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    gap: 5px;
+}
+
+.day-name { font-size: 0.7rem; opacity: 0.5; margin-bottom: 5px; }
+
+.day {
+    padding: 8px 0;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.day:hover { background: rgba(168, 85, 247, 0.3); }
+
+.today {
+    background: #a855f7;
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
+    font-weight: bold;
+}
+
+/* Responsividade para o Kanban */
+@media (max-width: 768px) {
+    .kanban-container { grid-template-columns: 1fr; }
+}
     </style>
 </head>
-<body>
-    <div class="top-bar">Agenda Aí - Área do Profissional</div>
 
-    <div class="container">
-        <div class="card-info">
-            <i class="fas fa-cut"></i>
-            <h1>Bem-vindo ao seu Painel</h1>
-            <p>Olá! Este é o seu espaço de gerenciamento. <br> 
-               Em breve, aqui você encontrará sua lista de agendamentos, horários marcados e estatísticas de atendimento.</p>
-            
-            <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                <small style="opacity: 0.5;">Módulo de Gerenciamento em Desenvolvimento</small>
+
+
+<div class="calendar-glass">
+    <div class="calendar-header">
+        <button><i class="fas fa-chevron-left"></i></button>
+        <span>Abril 2026</span>
+        <button><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div class="calendar-grid">
+        <div class="day-name">D</div><div class="day-name">S</div><div class="day-name">T</div>
+        <div class="day-name">Q</div><div class="day-name">Q</div><div class="day-name">S</div><div class="day-name">S</div>
+        <div class="day empty"></div><div class="day">1</div><div class="day">2</div>
+        <div class="day today">3</div><div class="day">4</div><div class="day">5</div><div class="day">6</div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+<div class="container-agenda">
+    <div class="agenda-header">
+        <div class="date-info">
+            <h2>Agenda de Hoje</h2>
+            <p id="current-date">19 de Abril, 2026</p>
+        </div>
+        <button class="btn-new"><i class="fas fa-plus"></i> Novo Horário</button>
+    </div>
+
+
+<div class="kanban-container">
+    <div class="kanban-column">
+        <div class="column-header"><i class="fas fa-clock"></i> Pendentes</div>
+        <div class="glass-card active kanban-item">
+            <div class="time-slot">09:00</div>
+            <div class="client-details">
+                <h3>Thiago Silva</h3>
+                <span>Pigmentação</span>
             </div>
-            
-            <a href="{% url 'login' %}" style="color: white; display: block; margin-top: 20px; opacity: 0.6;">Sair do sistema</a>
         </div>
     </div>
-</body>
-</html>
+
+    <div class="kanban-column">
+        <div class="column-header"><i class="fas fa-cut"></i> Em execução</div>
+        <div class="glass-card active kanban-item" style="border-left-color: #3b82f6;">
+            <div class="time-slot" style="color: #3b82f6;">11:00</div>
+            <div class="client-details">
+                <h3>Marcos Souza</h3>
+                <span>Corte + Barba</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="kanban-column">
+        <div class="column-header"><i class="fas fa-check-double"></i> Concluídos</div>
+        <div class="glass-card kanban-item done">
+            <div class="time-slot" style="color: #10b981;">08:00</div>
+            <div class="client-details">
+                <h3>Ricardo Oliveira</h3>
+                <span>Barboterapia</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <!-- 
+    <div class="timeline">
+        <div class="glass-card active">
+            <div class="time-slot">09:00</div>
+            <div class="client-details">
+                <h3>Ricardo Oliveira</h3>
+                <span>Corte Degradê + Barba</span>
+            </div>
+            <div class="status-tag">Confirmado</div>
+            <div class="actions">
+                <i class="fas fa-check-circle"></i>
+            </div>
+        </div>
+
+        <div class="glass-card vago">
+            <div class="time-slot">10:00</div>
+            <div class="client-details">
+                <h3 style="opacity: 0.5;">Horário Disponível</h3>
+            </div>
+            <i class="fas fa-calendar-plus" style="font-size: 1.2rem; opacity: 0.3;"></i>
+        </div>
+
+        <div class="glass-card active">
+            <div class="time-slot">11:00</div>
+            <div class="client-details">
+                <h3>Marcos Souza</h3>
+                <span>Pigmentação</span>
+            </div>
+            <div class="status-tag">A caminho</div>
+            <div class="actions">
+                <i class="fas fa-ellipsis-v"></i>
+            </div>
+        </div>
+    </div>-->
+</div>
+
+<style>
+    /* CSS Adicional para integrar ao seu estilo */
+    .container-agenda {
+        width: 100%;
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .agenda-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .btn-new {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 12px;
+        cursor: pointer;
+        backdrop-filter: blur(10px);
+        transition: 0.3s;
+    }
+
+    .btn-new:hover { background: rgba(255, 255, 255, 0.2); }
+
+    .timeline { display: flex; flex-direction: column; gap: 15px; }
+
+    .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        transition: 0.3s;
+    }
+
+    .glass-card.active { border-left: 5px solid #a855f7; } /* Roxo mais brilhante */
+    
+    .glass-card:hover {
+        transform: translateX(10px);
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .time-slot {
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: #a855f7;
+        width: 80px;
+    }
+
+    .client-details { flex: 1; }
+    .client-details h3 { margin: 0; font-size: 1.1rem; }
+    .client-details span { font-size: 0.85rem; opacity: 0.6; }
+
+    .status-tag {
+        background: rgba(168, 85, 247, 0.2);
+        color: #d8b4fe;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        margin-right: 15px;
+    }
+
+    .vago { opacity: 0.7; border-style: dashed; }
+</style>

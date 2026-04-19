@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-header bg-dark text-white">
+            <h3>Cadastro de Novo Barbeiro</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label>Nome Completo</label>
+                        <input type="text" name="nome_completo" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>E-mail</label>
+                        {{ form.email }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label>CPF</label>
+                        <input type="text" name="cpf" class="form-control" placeholder="000.000.000-00">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>Celular</label>
+                        <input type="text" name="celular" class="form-control">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label>Endereço da Barbearia</label>
+                    <textarea name="endereco_barbearia" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label>Senha (Mín. 8 caracteres + Especial)</label>
+                        <input type="password" name="senha" class="form-control">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>Confirmar Senha</label>
+                        <input type="password" name="confirmar_senha" class="form-control">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Finalizar Cadastro</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

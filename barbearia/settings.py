@@ -81,8 +81,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'barbearia_agenda',
-        'USER': 'italo',
-        'PASSWORD': 'senha123',
+        'USER': 'root',
+        'PASSWORD': 'Senha123',
         'HOST': 'localhost',
         'PORT': '3306',
     }

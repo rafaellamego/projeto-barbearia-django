@@ -36,19 +36,53 @@ def cadastrar(request):
     return render(request, 'agenda/cadastrar.html')
 
 def home_barbeiro(request):
-    return render(request, 'agenda/home_barbeiro.html')
+ #   agendamentos = Agendamento.objects.filter(barbeiro=request.user.barbeiro).order_by('horario')
+    
+  #  context = {
+   #     'agendamentos': agendamentos,
+   #     'total_hoje': agendamentos.count(),
+   # }
 
-# VIEW DE LOGIN ATUALIZADA (AGORA BUSCA NAS DUAS TABELAS)
+
+
+
+    return render(request, 'agenda/home_barbeiro.html')
+# Marcel 15/04
+#from django.shortcuts import render
+#from .models import Agendamento # Supondo que você tenha este model
+
+#def home_barbeiro(request):
+    # Filtra agendamentos do dia para o barbeiro logado
+    agendamentos = Agendamento.objects.filter(barbeiro=request.user.barbeiro).order_by('horario')
+    
+   # context = {
+    #    'agendamentos': agendamentos,
+    #    'total_hoje': agendamentos.count(),
+    #}
+    return render(request, 'agenda/home_barbeiro.html', context)
+
+
+
+
+
+# VIEW DE LOGIN COM ACESSO DIRETO PARA O BARBEIRO ADMIN
 def login_view(request, tipo='cliente'): 
     if request.method == 'POST':
         telefone = request.POST.get('telefone')
         senha = request.POST.get('senha')
 
+        # --- INÍCIO DA ALTERAÇÃO: LOGIN FIXO DO BARBEIRO ---
+        # Removendo parênteses e traços caso o usuário digite com máscara
+        telefone_limpo = re.sub(r'\D', '', telefone) 
+        
+        if telefone_limpo == "99999999999" and senha == "admin":
+            return redirect('home_barbeiro')
+        # --- FIM DA ALTERAÇÃO ---
+
         try:
             if tipo == 'barbeiro':
-                # Busca especificamente na tabela de Barbeiros
+                # Busca na tabela de Barbeiros (para outros barbeiros cadastrados no DB)
                 barbeiro = Barbeiro.objects.get(telefone=telefone, senha=senha)
-                # No futuro, mude para 'home_barbeiro'
                 return redirect('home_barbeiro')  
             else:
                 # Busca na tabela de Clientes
@@ -56,13 +90,11 @@ def login_view(request, tipo='cliente'):
                 return redirect('home')
                 
         except (Usuario.DoesNotExist, Barbeiro.DoesNotExist):
-            # Se não achar em NENHUMA das tabelas (dependendo do tipo)
             messages.error(request, "Telefone ou senha inválidos")
             return render(request, 'agenda/login.html', {'tipo': tipo})
     
     return render(request, 'agenda/login.html', {'tipo': tipo})
 
-
-
 def agendar(request):
     return render(request, 'agenda/agendar.html')
+
