@@ -79,12 +79,8 @@ WSGI_APPLICATION = 'barbearia.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'barbearia_agenda',
-        'USER': 'root',
-        'PASSWORD': 'Senha123',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 

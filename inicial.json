@@ -1,0 +1,32 @@
+[
+{
+  "model": "agenda.usuario",
+  "pk": 1,
+  "fields": {
+    "nome": "clinte01",
+    "telefone": "15900020002",
+    "data_nascimento": "1985-01-01",
+    "senha": "cliente"
+  }
+},
+{
+  "model": "agenda.barbeiro",
+  "pk": 1,
+  "fields": {
+    "nome": "cortefino",
+    "telefone": "11900010001",
+    "senha": "agenda@123",
+    "especialidade": "barbeiro"
+  }
+},
+{
+  "model": "agenda.barbeiro",
+  "pk": 2,
+  "fields": {
+    "nome": "Barbeiroteste",
+    "telefone": "11922223333",
+    "senha": "ad123",
+    "especialidade": null
+  }
+}
+]

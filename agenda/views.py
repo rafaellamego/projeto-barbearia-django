@@ -36,18 +36,24 @@ def cadastrar(request):
     return render(request, 'agenda/cadastrar.html')
 
 def home_barbeiro(request):
- #   agendamentos = Agendamento.objects.filter(barbeiro=request.user.barbeiro).order_by('horario')
+    barbeiro_id = request.session.get('barbeiro_id')
     
-  #  context = {
-   #     'agendamentos': agendamentos,
-   #     'total_hoje': agendamentos.count(),
-   # }
+    if not barbeiro_id:
+        return redirect('login_barbeiro')
 
-
-
-
-    return render(request, 'agenda/home_barbeiro.html')
-# Marcel 15/04
+    from .models import Agendamento, Barbeiro
+    barbeiro_logado = Barbeiro.objects.get(id=barbeiro_id)
+    
+    agendamentos = Agendamento.objects.filter(barbeiro=barbeiro_logado).order_by('hora')
+    
+    context = {
+        'barbeiro': barbeiro_logado,
+        'agendamentos': agendamentos,
+        'total_hoje': agendamentos.count(),
+    }
+    return render(request, 'agenda/home_barbeiro.html', context)
+    # REMOVA OU COMENTE TUDO QUE ESTIVER ABAIXO DESSE RETURN DENTRO DA FUNÇÃO
+    
 #from django.shortcuts import render
 #from .models import Agendamento # Supondo que você tenha este model
 
@@ -61,36 +67,41 @@ def home_barbeiro(request):
     #}
     return render(request, 'agenda/home_barbeiro.html', context)
 
-
-
-
-
 # VIEW DE LOGIN COM ACESSO DIRETO PARA O BARBEIRO ADMIN
+# VIEW DE LOGIN AJUSTADA
 def login_view(request, tipo='cliente'): 
     if request.method == 'POST':
         telefone = request.POST.get('telefone')
         senha = request.POST.get('senha')
 
-        # --- INÍCIO DA ALTERAÇÃO: LOGIN FIXO DO BARBEIRO ---
-        # Removendo parênteses e traços caso o usuário digite com máscara
-        telefone_limpo = re.sub(r'\D', '', telefone) 
+        # ERRO 1: Você precisa definir o telefone_limpo aqui dentro!
+        import re
+        telefone_limpo = re.sub(r'\D', '', telefone) if telefone else ""
         
-        if telefone_limpo == "99999999999" and senha == "admin":
-            return redirect('home_barbeiro')
-        # --- FIM DA ALTERAÇÃO ---
+        # 1. TESTE DO LOGIN FIXO (Para agilizar seu teste na UNIVESP)
+        if telefone_limpo == "11922223333" and senha == "ad123":
+            barbeiro = Barbeiro.objects.filter(telefone=telefone_limpo).first()
+            if barbeiro:
+                request.session['barbeiro_id'] = barbeiro.id
+                # Forçamos o tipo para barbeiro no login fixo
+                return redirect('home_barbeiro')
+            else:
+                messages.error(request, "Barbeiro teste não encontrado no banco. Crie-o no shell!")
 
+        # 2. AUTENTICAÇÃO DINÂMICA
         try:
             if tipo == 'barbeiro':
-                # Busca na tabela de Barbeiros (para outros barbeiros cadastrados no DB)
-                barbeiro = Barbeiro.objects.get(telefone=telefone, senha=senha)
-                return redirect('home_barbeiro')  
+                barbeiro = Barbeiro.objects.get(telefone=telefone_limpo, senha=senha)
+                request.session['barbeiro_id'] = barbeiro.id
+                return redirect('home_barbeiro')
             else:
-                # Busca na tabela de Clientes
-                usuario = Usuario.objects.get(telefone=telefone, senha=senha)
+                usuario = Usuario.objects.get(telefone=telefone_limpo, senha=senha)
+                request.session['usuario_id'] = usuario.id
                 return redirect('home')
                 
         except (Usuario.DoesNotExist, Barbeiro.DoesNotExist):
             messages.error(request, "Telefone ou senha inválidos")
+            # Se deu erro, volta para a mesma tela de login mantendo o tipo
             return render(request, 'agenda/login.html', {'tipo': tipo})
     
     return render(request, 'agenda/login.html', {'tipo': tipo})
