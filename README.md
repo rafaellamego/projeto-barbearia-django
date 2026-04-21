@@ -17,23 +17,28 @@ Este é um sistema de gerenciamento de barbearia desenvolvido com **Django** e *
 ## 🔧 Como rodar o projeto localmente
 
 1. **Clone o repositório:**
-   bash
+   ```bash
    git clone [https://github.com/rafaellamego/projeto-barbearia-django.git](https://github.com/rafaellamego/projeto-barbearia-django)
+   ```
 
 2. **Instale as dependências:**
-    bash
+    ```bash
     pip install -r requirements.txt
+    ```
 
 3. **Configure o Banco de Dados:**
     Crie um banco de dados no MySQL chamado barbearia_agenda.
     Ajuste as credenciais no arquivo settings.py (USER e PASSWORD).
 
 4. **Execute as migrações do Django:**
-    bash
+    ```bash
     python manage.py migrate
+    ```
 
 5. **Inicie o servidor:**
+    ```bash
     python manage.py runserver
+    ```
 
 
 ## 📸 Demonstração do Sistema
