@@ -1,21 +1,31 @@
-# Python
+# Ambiente virtual
+venv/
+env/
+ENV/
+
+# Python cache
 __pycache__/
-*.py[cod]
-*$py.class
- venv/
-.venv/
+*.pyc
+*.pyo
 
-# Django
-local_settings.py
+# Banco de dados
+*.sqlite3
 db.sqlite3
-media/
-staticfiles/
 
-# Ambientes e Segredos
+# Migrações (opcional - algumas pessoas versionam)
+# agenda/migrations/*.py
+# !agenda/migrations/__init__.py
+
+# Arquivos de configuração local
 .env
+*.log
+
+# IDE
 .vscode/
 .idea/
-
-# MySQL (Caso tenha logs locais)
-*.log
-*.sql
+venv/
+venv/
+venv/
+__pycache__/
+*.pyc
+db.sqlite3
