@@ -1,14 +1,19 @@
 from django.urls import path
-from .views import login_view, cadastrar, agendar, home_barbeiro
+from . import views # Importar assim facilita a manutenção
 
 urlpatterns = [
-    path('', login_view, name='login'), # Login padrão (cliente)
-    path('barbeiro/', login_view, {'tipo': 'barbeiro'}, name='login_barbeiro'), # Login barbeiro
-    path('cadastrar/', cadastrar, name='cadastrar'),
+    # --- LOGIN E CADASTRO ---
+    path('', views.login_view, name='login'), # Login padrão (cliente)
+    path('barbeiro/', views.login_view, {'tipo': 'barbeiro'}, name='login_barbeiro'),
+    path('cadastrar/', views.cadastrar, name='cadastrar'),
 
-    #Rota do cliente
-    path('home/', agendar, name='home'),
-    #Rota do barbeiro
-    path('home/barbeiro/', home_barbeiro, name='home_barbeiro'),
+    # --- ROTAS DO CLIENTE ---
+    path('home/', views.agendar, name='home'),
+
+    # --- ROTAS DO BARBEIRO ---
+    path('home/barbeiro/', views.home_barbeiro, name='home_barbeiro'),
     
+    # --- AJAX (KANBAN) ---
+    # Essa rota é essencial para o JavaScript conseguir salvar a mudança de coluna no banco!
+    path('atualizar_status_agendamento/', views.atualizar_status_agendamento, name='atualizar_status_agendamento'),
 ]

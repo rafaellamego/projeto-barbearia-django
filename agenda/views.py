@@ -1,9 +1,12 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .models import Usuario, Barbeiro
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .models import Usuario, Barbeiro, Agendamento
 import re
+import json
 
-# VIEW DE CADASTRO
+# CADASTRO
 def cadastrar(request):
     if request.method == 'POST':
         nome = request.POST.get("nome")
@@ -11,86 +14,105 @@ def cadastrar(request):
         data_nascimento = request.POST.get("data_nascimento")
         senha = request.POST.get("senha")
 
+        # Evita o erro de UNIQUE constraint (telefone duplicado)
+        if Usuario.objects.filter(telefone=telefone).exists():
+            messages.error(request, "Este telefone já está cadastrado!")
+            return render(request, 'agenda/cadastrar.html', {'nome': nome})
+
         if not telefone.isdigit() or len(telefone) != 11:
-            messages.error(request, "Telefone deve ter 11 números (DDD + número)")
-            return render(request, 'agenda/cadastrar.html', request.POST)
+            messages.error(request, "Telefone deve ter 11 números")
+            return render(request, 'agenda/cadastrar.html')
         
-        elif len(senha) < 4 or len(senha) > 12 or not re.search(r'\d', senha) or not re.search(r'[!@#$%^&*(),.?":{}|<>]', senha):
-            messages.error(request, "Senha deve ter entre 4 e 12 caracteres, 1 número e 1 caractere especial")
-            return render(request, 'agenda/cadastrar.html', request.POST)
+        if len(senha) < 4:
+            messages.error(request, "Senha muito curta")
+            return render(request, 'agenda/cadastrar.html')
 
-        elif Usuario.objects.filter(telefone=telefone).exists():
-            messages.error(request, "Usuário já cadastrado")
-            return render(request, 'agenda/cadastrar.html', request.POST)
-
-        else:
-            Usuario.objects.create(
-                nome=nome,
-                telefone=telefone,
-                data_nascimento=data_nascimento,
-                senha=senha
-            )
-            messages.success(request, "Cadastro efetuado com sucesso!")
-            return redirect('login')
+        Usuario.objects.create(nome=nome, telefone=telefone, data_nascimento=data_nascimento, senha=senha)
+        messages.success(request, "Cadastro efetuado!")
+        return redirect('login') # Redireciona para o name='login' do seu urls.py
 
     return render(request, 'agenda/cadastrar.html')
 
-# HOME DO BARBEIRO - LIMPA E CORRIGIDA
-def home_barbeiro(request):
-    barbeiro_id = request.session.get('barbeiro_id')
-    
-    if not barbeiro_id:
-        return redirect('login_view', tipo='barbeiro')
-
-    from .models import Agendamento, Barbeiro
-    try:
-        barbeiro_logado = Barbeiro.objects.get(id=barbeiro_id)
-    except Barbeiro.DoesNotExist:
-        return redirect('login_view', tipo='barbeiro')
-    
-    agendamentos = Agendamento.objects.filter(barbeiro=barbeiro_logado).order_by('hora')
-    
-    context = {
-        'barbeiro': barbeiro_logado,
-        'agendamentos': agendamentos,
-        'total_hoje': agendamentos.count(),
-    }
-    return render(request, 'agenda/home_barbeiro.html', context)
-
-# VIEW DE LOGIN
+# LOGIN
 def login_view(request, tipo='cliente'): 
     if request.method == 'POST':
-        telefone = request.POST.get('telefone')
+        telefone = re.sub(r'\D', '', request.POST.get('telefone', ""))
         senha = request.POST.get('senha')
 
-        import re
-        telefone_limpo = re.sub(r'\D', '', telefone) if telefone else ""
-        
-        # 1. TESTE DO LOGIN FIXO
-        if telefone_limpo == "11922223333" and senha == "ad123":
-            barbeiro = Barbeiro.objects.filter(telefone=telefone_limpo).first()
-            if barbeiro:
-                request.session['barbeiro_id'] = barbeiro.id
-                return redirect('home_barbeiro')
-            else:
-                messages.error(request, "Barbeiro teste não encontrado no banco.")
-
-        # 2. AUTENTICAÇÃO DINÂMICA
         try:
             if tipo == 'barbeiro':
-                barbeiro = Barbeiro.objects.get(telefone=telefone_limpo, senha=senha)
-                request.session['barbeiro_id'] = barbeiro.id
+                user = Barbeiro.objects.get(telefone=telefone, senha=senha)
+                request.session['barbeiro_id'] = user.id
                 return redirect('home_barbeiro')
             else:
-                usuario = Usuario.objects.get(telefone=telefone_limpo, senha=senha)
-                request.session['usuario_id'] = usuario.id
-                return redirect('home')
-                
-        except (Usuario.DoesNotExist, Barbeiro.DoesNotExist):
-            messages.error(request, "Telefone ou senha inválidos")
-            return render(request, 'agenda/login.html', {'tipo': tipo})
+                user = Usuario.objects.get(telefone=telefone, senha=senha)
+                request.session['usuario_id'] = user.id
+                return redirect('home') # 'home' é o agendar no seu urls.py
+        except:
+            messages.error(request, "Dados inválidos")
     
     return render(request, 'agenda/login.html', {'tipo': tipo})
 
+# HOME BARBEIRO (KANBAN)
+def home_barbeiro(request):
+    barbeiro_id = request.session.get('barbeiro_id')
+    if not barbeiro_id: 
+        return redirect('login_barbeiro')
+
+    try:
+        barbeiro_logado = Barbeiro.objects.get(id=barbeiro_id)
+        agendamentos = Agendamento.objects.filter(barbeiro=barbeiro_logado)
+
+        context = {
+            'barbeiro': barbeiro_logado,
+            'pendentes': agendamentos.filter(status='pendentes'),
+            'execucao': agendamentos.filter(status='execucao'),
+            'concluidos': agendamentos.filter(status='concluidos'),
+        }
+        return render(request, 'agenda/home_barbeiro.html', context)
+    except Barbeiro.DoesNotExist:
+        return redirect('login_barbeiro')
+
+# AJAX PARA O KANBAN
+@csrf_exempt
+def atualizar_status_agendamento(request):
+    if request.method == 'POST':
+        try:
+            dados = json.loads(request.body)
+            agendamento = Agendamento.objects.get(id=dados['id'])
+            agendamento.status = dados['status']
+            agendamento.save()
+            return JsonResponse({'status': 'sucesso'})
+        except Exception as e:
+            return JsonResponse({'status': 'erro', 'message': str(e)}, status=400)
+
+# TELA DE AGENDAMENTO (CLIENTE)
 def agendar(request):
-    return render(request, 'agenda/agendar.html')
+    usuario_id = request.session.get('usuario_id')
+    if not usuario_id:
+        return redirect('login')
+
+    if request.method == 'POST':
+        barbeiro_id = request.POST.get('barbeiro')
+        data_hora = request.POST.get('data')
+        
+        try:
+            # Busca as instâncias dos objetos
+            cliente = Usuario.objects.get(id=usuario_id)
+            barbeiro = Barbeiro.objects.get(id=barbeiro_id)
+            
+            # Cria o agendamento no banco
+            Agendamento.objects.create(
+                usuario=cliente,
+                barbeiro=barbeiro,
+                data=data_hora,
+                status='pendentes' # Começa sempre como pendente para o Kanban
+            )
+            messages.success(request, "Agendamento realizado com sucesso!")
+            return redirect('home')
+        except Exception as e:
+            messages.error(request, f"Erro ao agendar: {e}")
+
+    # Puxa os barbeiros para aparecerem na tela
+    barbeiros = Barbeiro.objects.all()
+    return render(request, 'agenda/agendar.html', {'barbeiros': barbeiros})
