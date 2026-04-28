@@ -22,11 +22,10 @@
             font-family: 'Arial', sans-serif;
             margin: 0;
             color: white;
-            display: flex; /* Para a Sidebar funcionar lado a lado */
+            display: flex;
             min-height: 100vh;
         }
 
-        /* --- SIDEBAR MENU --- */
         .sidebar {
             width: 260px;
             background: rgba(20, 10, 30, 0.6);
@@ -54,14 +53,13 @@
             text-decoration: none;
         }
 
-        .menu-item i { font-size: 1.2rem; margin-right: 15px; margin-bottom: 0; opacity: 1; width: 25px; }
+        .menu-item i { font-size: 1.2rem; margin-right: 15px; width: 25px; }
         .menu-item:hover { background: var(--purple-glass); color: white; }
         .menu-item.active { background: var(--purple-glass); border-left: 4px solid var(--purple-bright); color: white; }
 
-        /* --- CONTEÚDO PRINCIPAL --- */
         main {
             flex: 1;
-            margin-left: 260px; /* Espaço para a sidebar */
+            margin-left: 260px;
             padding: 40px;
             display: flex;
             flex-direction: column;
@@ -77,7 +75,6 @@
             margin-bottom: 40px;
         }
 
-        /* --- KANBAN --- */
         .kanban-container {
             display: flex;
             justify-content: center;
@@ -102,14 +99,12 @@
             font-weight: bold;
             text-transform: uppercase;
             font-size: 0.8rem;
-            letter-spacing: 1px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
         .column-header i { font-size: 1.5rem; margin-bottom: 10px; color: var(--purple-bright); }
 
-        /* --- CARDS (Drag & Drop) --- */
         .glass-card {
             background: rgba(255, 255, 255, 0.07);
             backdrop-filter: blur(15px);
@@ -122,14 +117,12 @@
         }
 
         .glass-card:active { cursor: grabbing; }
-        .glass-card.active { border-left: 4px solid var(--purple-bright); }
         .sortable-ghost { opacity: 0.3; transform: scale(0.9); }
 
         .time-slot { color: var(--purple-bright); font-weight: bold; margin-bottom: 5px; }
         .client-details h3 { margin: 0; font-size: 1rem; }
         .client-details span { font-size: 0.8rem; opacity: 0.6; }
 
-        /* --- CALENDÁRIO --- */
         .calendar-glass {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border-glass);
@@ -140,6 +133,7 @@
         .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 0.9rem; }
         .calendar-header button { background: none; border: none; color: white; cursor: pointer; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 0.8rem; }
+        .calendar-grid div { padding: 5px 0; }
         .today { background: var(--purple-bright); border-radius: 5px; font-weight: bold; }
 
         @media (max-width: 1024px) {
@@ -152,26 +146,17 @@
 <body>
 
     <nav class="sidebar">
-
-
-
-
-
         <h2>AGENDA AÍ</h2>
         <a href="#" class="menu-item active">
             <i class="fas fa-th-large"></i> <span>Gerência</span>
         </a>
-        <a href="#" class="menu-item">
+        <a href="{% url 'cadastrar' %}" class="menu-item">
             <i class="fas fa-plus-circle"></i> <span>Adicionar Agendamento Manualmente</span>
         </a>
 
-        <!-- funcao excluir drag drop - Marcel-->
-        <div id="delete-zone" class="menu-item" style="border: 1px dashed rgba(255,0,0,0.3);">
-        <i class="fas fa-trash-alt" style="color: #ff4d4d;"></i> <span>Excluir (Solte aqui)</span>
+        <div id="delete-zone" class="menu-item" style="border: 1px dashed rgba(255,0,0,0.3); margin-top: 20px;">
+            <i class="fas fa-trash-alt" style="color: #ff4d4d;"></i> <span>Excluir (Solte aqui)</span>
         </div>
-        <!-- Funcao Fim-->
-
-
         
         <div style="margin-top: auto;">
             <a href="#" class="menu-item">
@@ -181,302 +166,156 @@
     </nav>
 
     <main>
-
-     
-
-
         <div class="top-header">
             <div class="date-info">
-
-                <!-- 20/04 EXIBIR NO TOPO USUARIO BARBEIRO QUE ESTÁ LOGADO ..... MARCEL ADD-->
-                <h1 style="font-size: small;">Bem vindo, {{ barbeiro }}</h1>
-                <!-- FIM DA ALTERACÃO-->
-
-
+                <h1 style="font-size: small;">Bem vindo, {{ barbeiro.nome }}</h1>
                 <h1 style="font-size: 1.5rem;">Agenda de Hoje</h1>
-                
-                <!-- Data corrente adicionado Marcel Murai 20/04 -->    
                 <p>Hoje é: <span id="data-atual"></span></p>
-                <script>
-                // Obtém a data de hoje
-                const hoje = new Date();
-                // Opções para formatar apenas dia e mês por extenso
-                const opcoes = { day: 'numeric', month: 'long' };
-                // Formata para o padrão brasileiro
-                const dataFormatada = hoje.toLocaleDateString('pt-BR', opcoes);
-                // Insere o texto no elemento HTML
-                document.getElementById('data-atual').innerText = dataFormatada;
-                </script>
-
-                <!--<p id="current-date"></p>-->
-
-
-
             </div>
-      
 
-    
-            <!--
             <div class="calendar-glass">
                 <div class="calendar-header">
-                    <button><i class="fas fa-caret-left"></i></button>
-                    <span>Abril 2026</span>
-                    <button><i class="fas fa-caret-right"></i></button>
+                    <button id="prevMonth"><i class="fas fa-caret-left"></i></button>
+                    <span id="monthDisplay">Abril 2026</span>
+                    <button id="nextMonth"><i class="fas fa-caret-right"></i></button>
                 </div>
-                <div class="calendar-grid">
-                    <div style="opacity: 0.5;">D</div><div style="opacity: 0.5;">S</div><div style="opacity: 0.5;">T</div><div style="opacity: 0.5;">Q</div><div style="opacity: 0.5;">Q</div><div style="opacity: 0.5;">S</div><div style="opacity: 0.5;">S</div>
-                    
-                    <div></div><div>1</div><div>2</div><div class="today">3</div><div>4</div><div>5</div><div>6</div>
-
-
-
-
-
-
-
+                <div class="calendar-grid" id="calendarGrid">
+                    <div style="opacity: 0.5;">D</div><div style="opacity: 0.5;">S</div><div style="opacity: 0.5;">T</div>
+                    <div style="opacity: 0.5;">Q</div><div style="opacity: 0.5;">Q</div><div style="opacity: 0.5;">S</div><div style="opacity: 0.5;">S</div>
                 </div>
-            </div>                         Funcao Adicionada   MARCEL  -->
-
-            <div class="calendar-glass">
-            <div class="calendar-header">
-            <button id="prevMonth"><i class="fas fa-caret-left"></i></button>
-            <span id="monthDisplay">Abril 2026</span>
-            <button id="nextMonth"><i class="fas fa-caret-right"></i></button>
             </div>
-            <div class="calendar-grid" id="calendarGrid">
-                <div style="opacity: 0.5;">D</div>
-                <div style="opacity: 0.5;">S</div>
-                <div style="opacity: 0.5;">T</div>
-                <div style="opacity: 0.5;">Q</div>
-                <div style="opacity: 0.5;">Q</div>
-                <div style="opacity: 0.5;">S</div>
-                <div style="opacity: 0.5;">S</div>
-            </div>
-</div>
-<!-- FIM DA FUNC ADIC-->
-
-
-
-
-
-
-
-
-
         </div>
 
         <div class="kanban-container">
             <div class="kanban-column">
                 <div class="column-header"><i class="fas fa-clock"></i> Pendentes</div>
-                <div class="sortable-list" id="pendentes">
-                    <div class="glass-card active">
-                        <div class="time-slot">09:00</div>
+                <div class="sortable-list" id="pendentes" style="min-height: 350px;">
+                    {% for card in pendentes %}
+                    <div class="glass-card" data-id="{{ card.id }}">
+                        <div class="time-slot">{{ card.hora|time:"H:i" }}</div>
                         <div class="client-details">
-                            <h3>Thiago Silva</h3>
-                            <span>Pigmentação</span>
+                            <h3>{{ card.usuario.nome }}</h3>
+                            <span>Agendado</span>
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
             </div>
 
             <div class="kanban-column">
                 <div class="column-header"><i class="fas fa-cut"></i> Em execução</div>
-                <div class="sortable-list" id="execucao">
-                    <div class="glass-card active" style="border-left-color: #3b82f6;">
-                        <div class="time-slot" style="color: #3b82f6;">11:00</div>
+                <div class="sortable-list" id="execucao" style="min-height: 350px;">
+                    {% for card in execucao %}
+                    <div class="glass-card" style="border-left: 4px solid #3b82f6;" data-id="{{ card.id }}">
+                        <div class="time-slot" style="color: #3b82f6;">{{ card.hora|time:"H:i" }}</div>
                         <div class="client-details">
-                            <h3>Marcos Souza</h3>
-                            <span>Corte + Barba</span>
+                            <h3>{{ card.usuario.nome }}</h3>
+                            <span>Atendimento</span>
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
             </div>
 
             <div class="kanban-column">
                 <div class="column-header"><i class="fas fa-check-double"></i> Concluídos</div>
-                <div class="sortable-list" id="concluidos">
-                    <div class="glass-card" style="opacity: 0.6; border-left: 4px solid #10b981;">
-                        <div class="time-slot" style="color: #10b981;">08:00</div>
+                <div class="sortable-list" id="concluidos" style="min-height: 350px;">
+                    {% for card in concluidos %}
+                    <div class="glass-card" style="opacity: 0.6; border-left: 4px solid #10b981;" data-id="{{ card.id }}">
+                        <div class="time-slot" style="color: #10b981;">{{ card.hora|time:"H:i" }}</div>
                         <div class="client-details">
-                            <h3>Ricardo Oliveira</h3>
-                            <span>Barboterapia</span>
+                            <h3>{{ card.usuario.nome }}</h3>
+                            <span>Concluído</span>
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
     </main>
 
-    
-    
-    
-    
-    
-    
-    <!-- INICIO -->
-    
-    
-    
     <script>
-    // 1. Configuração do Calendário Dinâmico 
-    
-    /*    CONFLITO DE CODIGO A RESOLVER MARCEL *************************
-    const monthDisplay = document.getElementById('monthDisplay');
-    const calendarGrid = document.getElementById('calendarGrid');
-    let date = new Date();
+        // 1. DATA ATUAL NO TOPO
+        const hoje = new Date();
+        document.getElementById('data-atual').innerText = hoje.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' });
 
-    function renderCalendar() {
-        const headers = Array.from(calendarGrid.children).slice(0, 7);
-        calendarGrid.innerHTML = '';
-        headers.forEach(h => calendarGrid.appendChild(h));
-
-        const day = new Date(date.getFullYear(), date.getMonth(), 1);
-        const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-        const firstDayIndex = day.getDay();
-        const today = new Date();
-
-        const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-        monthDisplay.innerText = `${months[date.getMonth()]} ${date.getFullYear()}`;
-
-        for (let x = 0; x < firstDayIndex; x++) {
-            const emptyDiv = document.createElement('div');
-            emptyDiv.classList.add('day');
-            calendarGrid.appendChild(emptyDiv);
-        }
-
-        for (let i = 1; i <= lastDay; i++) {
-            const dayDiv = document.createElement('div');
-            dayDiv.classList.add('day');
-            if (i === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear()) {
-                dayDiv.classList.add('today');
-            }
-            dayDiv.innerText = i;
-            calendarGrid.appendChild(dayDiv);
-        }
-    }
-    FIM   **********************************************/
-
-    // 2. Configuração do Kanban e Exclusão
-    const colunas = ['pendentes', 'execucao', 'concluidos'];
-    const deleteZone = document.getElementById('delete-zone');
-
-    // Inicializa as colunas do Kanban
-    colunas.forEach(id => {
-        new Sortable(document.getElementById(id), {
-            group: 'kanban',
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            onEnd: function (evt) {
-                // Verifica se o item foi solto sobre a zona de excluir
-                // O SortableJS não detecta nativamente elementos fora de grupos, 
-                // então usamos a posição do mouse ou o elemento alvo.
-            }
-        });
-    });
-
-    // Inicializa a Zona de Exclusão
-    new Sortable(deleteZone, {
-        group: 'kanban',
-        onAdd: function (evt) {
-            const el = evt.item;
-            if (confirm("Deseja excluir este agendamento?")) {
-                el.parentNode.removeChild(el);
-                // Aqui você pode adicionar o comando para excluir no banco de dados Django:
-                // fetch('/excluir-agendamento/' + id, { method: 'POST' });
-            } else {
-                // Se cancelar, devolve o item para a lista de origem
-                evt.from.appendChild(el);
-            }
-        }
-    });
-
-    // 3. Data Atual no Título
-    const options = { day: 'numeric', month: 'long', year: 'numeric' };
-    document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', options);
-
-    renderCalendar();
-</script>
-    <!--<script>
-        // Inicializa o Drag & Drop para cada coluna
+        // 2. KANBAN (DRAG & DROP COM PERSISTÊNCIA)
         const colunas = ['pendentes', 'execucao', 'concluidos'];
-        
         colunas.forEach(id => {
             new Sortable(document.getElementById(id), {
-                group: 'kanban', // Permite mover entre colunas
+                group: 'kanban',
                 animation: 150,
                 ghostClass: 'sortable-ghost',
                 onEnd: function (evt) {
-                    // Aqui você pode adicionar uma chamada AJAX para o Django 
-                    // para salvar a nova posição no banco de dados!
-                    console.log('Movido de:', evt.from.id, 'para:', evt.to.id);
+                    const agendamentoId = evt.item.getAttribute('data-id');
+                    const novaColuna = evt.to.id;
+
+                    // Envia para o servidor salvar no MySQL
+                    fetch('/atualizar-status-agendamento/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            id: agendamentoId,
+                            status: novaColuna
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => console.log('Salvo:', data))
+                    .catch(err => console.error('Erro ao salvar:', err));
                 }
             });
         });
-    </script>-->
 
-<!-- SCRIPT FUNCAO CALENDARIO INICIO   MARCEL   -->
-<script>
-    const monthDisplay = document.getElementById('monthDisplay');
-    const calendarGrid = document.getElementById('calendarGrid');
-    let date = new Date();
-
-    function renderCalendar() {
-        // Limpar dias anteriores (mantendo os cabeçalhos D, S, T...)
-        const headers = Array.from(calendarGrid.children).slice(0, 7);
-        calendarGrid.innerHTML = '';
-        headers.forEach(h => calendarGrid.appendChild(h));
-
-        const day = new Date(date.getFullYear(), date.getMonth(), 1);
-        const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-        const firstDayIndex = day.getDay();
-        const today = new Date();
-
-        // Nome do mês e ano
-        const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-        monthDisplay.innerText = `${months[date.getMonth()]} ${date.getFullYear()}`;
-
-        // Espaços vazios antes do primeiro dia
-        for (let x = 0; x < firstDayIndex; x++) {
-            const emptyDiv = document.createElement('div');
-            emptyDiv.classList.add('day');
-            calendarGrid.appendChild(emptyDiv);
-        }
-
-        // Preencher os dias
-        for (let i = 1; i <= lastDay; i++) {
-            const dayDiv = document.createElement('div');
-            dayDiv.classList.add('day');
-            if (i === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear()) {
-                dayDiv.classList.add('today');
+        // 3. ZONA DE EXCLUSÃO
+        new Sortable(document.getElementById('delete-zone'), {
+            group: 'kanban',
+            onAdd: function (evt) {
+                if (confirm("Deseja excluir este agendamento?")) {
+                    evt.item.remove();
+                } else {
+                    evt.from.appendChild(evt.item);
+                }
             }
-            dayDiv.innerText = i;
-            calendarGrid.appendChild(dayDiv);
+        });
+
+        // 4. CALENDÁRIO DINÂMICO
+        const monthDisplay = document.getElementById('monthDisplay');
+        const calendarGrid = document.getElementById('calendarGrid');
+        let currentDate = new Date();
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const firstDay = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+            
+            const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            monthDisplay.innerText = `${months[month]} ${year}`;
+
+            const headers = Array.from(calendarGrid.children).slice(0, 7);
+            calendarGrid.innerHTML = '';
+            headers.forEach(h => calendarGrid.appendChild(h));
+
+            for (let i = 0; i < firstDay; i++) {
+                calendarGrid.appendChild(document.createElement('div'));
+            }
+
+            for (let i = 1; i <= lastDate; i++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.innerText = i;
+                if (i === hoje.getDate() && month === hoje.getMonth() && year === hoje.getFullYear()) {
+                    dayDiv.classList.add('today');
+                }
+                calendarGrid.appendChild(dayDiv);
+            }
         }
-    }
 
-    // Botões de navegação (Opcional)
-    document.getElementById('prevMonth').addEventListener('click', () => {
-        date.setMonth(date.getMonth() - 1);
+        document.getElementById('prevMonth').onclick = () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); };
+        document.getElementById('nextMonth').onclick = () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); };
+
         renderCalendar();
-    });
-
-    document.getElementById('nextMonth').addEventListener('click', () => {
-        date.setMonth(date.getMonth() + 1);
-        renderCalendar();
-    });
-
-    renderCalendar();
-</script>
-<!--SCRIPT FUNCAO CALENDARIO FIM-->
-
-
-
-
-
-
-
-
-
+    </script>
 </body>
 </html>
-</style>
