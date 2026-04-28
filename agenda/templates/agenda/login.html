@@ -244,16 +244,16 @@
                     <p class="subtitle">Agenda Online</p>
                 </div>
 
-                <div class="tabs">
-                    <a href="{% url 'login' %}" 
-                       class="tab-btn {% if tipo != 'barbeiro' %}active{% endif %}">
-                       Sou Cliente
-                    </a>
-                    <a href="{% url 'login_barbeiro' %}" 
-                       class="tab-btn {% if tipo == 'barbeiro' %}active{% endif %}">
-                       Sou Barbeiro
-                    </a>
-                </div>
+            <div class="tabs">
+            <a href="{% url 'login' %}" 
+                class="tab-btn {% if tipo != 'barbeiro' %}active{% endif %}">
+                Sou Cliente
+                </a>
+                <a href="/?tipo=barbeiro"
+                class="tab-btn {% if tipo == 'barbeiro' %}active{% endif %}">
+                Sou Barbeiro
+                </a>
+        </div>
 
                 {% if messages %}
                   <ul class="messages">

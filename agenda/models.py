@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-#AQUI FICAM AS TABELAS DO BANCO!
 
 from datetime import datetime, timedelta
 from pyexpat.errors import messages
@@ -8,9 +6,6 @@ from django.db import models
 import re
 
 from django.http import JsonResponse #esse módulo trabalha com padrões de texto, como buscar, validar, extrair ou substituir partes de string ex.: texto="Meu númeri é 11987654321" resultado = re.search(r"\d+",texto) \d+ = pega uma seqência de números
-=======
-from django.db import models
->>>>>>> de6dd1e325a0b573f26f48be6076f527350fba23
 
 class Usuario(models.Model):
     nome = models.CharField(max_length=150)
@@ -30,7 +25,6 @@ class Barbeiro(models.Model):
     def __str__(self):
         return f"Barbeiro: {self.nome}"
 
-<<<<<<< HEAD
 #Tabela com os serviços oferecidos (Corte, Barba, etc)
 class Servico(models.Model):
     nome = models.CharField(max_length=100)  # Nome do serviço (ex: "Corte Simples")
@@ -38,18 +32,6 @@ class Servico(models.Model):
     duracao_minutos = models.IntegerField()  # Quanto tempo dura (ex: 30 minutos)
     valor = models.DecimalField(max_digits=10, decimal_places=2)  # Preço (ex: 35.00)
     
-=======
-class Agendamento(models.Model):
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
-    barbeiro = models.ForeignKey(Barbeiro, on_delete=models.CASCADE, null=True, blank=True)
-    data = models.DateField()
-    hora = models.TimeField()
-    # CAMPO NOVO PARA O KANBAN
-    status = models.CharField(max_length=20, default='pendentes') 
-
->>>>>>> de6dd1e325a0b573f26f48be6076f527350fba23
-    def __str__(self):
-        return f"{self.nome} - R$ {self.valor} ({self.duracao_minutos}min)"
 
 
 # TABELA AGENDAMENTO (A reserva em si)

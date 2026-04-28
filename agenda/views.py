@@ -2,21 +2,14 @@ import datetime
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib import messages
-<<<<<<< HEAD
 from .models import Agendamento, Usuario, Barbeiro, Servico
-=======
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Usuario, Barbeiro, Agendamento
->>>>>>> de6dd1e325a0b573f26f48be6076f527350fba23
 import re
 import json
 
-<<<<<<< HEAD
-# ==================== CADASTRO ====================
-=======
 # CADASTRO
->>>>>>> de6dd1e325a0b573f26f48be6076f527350fba23
 def cadastrar(request):
     if request.method == 'POST':
         nome = request.POST.get("nome")
@@ -33,9 +26,8 @@ def cadastrar(request):
             messages.error(request, "Telefone deve ter 11 números")
             return render(request, 'agenda/cadastrar.html')
         
-<<<<<<< HEAD
         elif len(senha) < 4:
-            messages.error(request, "Senha deve ter pelo menos 4 caracteres")
+            messages.error(request, "Senha muito curta")
             return render(request, 'agenda/cadastrar.html')
 
         elif Usuario.objects.filter(telefone=telefone).exists():
@@ -50,37 +42,17 @@ def cadastrar(request):
                 senha=senha
             )
             messages.success(request, "Cadastro efetuado com sucesso!")
-            return redirect('login_view', tipo='cliente')
+            return redirect('login')
 
     return render(request, 'agenda/cadastrar.html')
 
 
-# ==================== HOME BARBEIRO ====================
-def home_barbeiro(request):
-    barbeiro_id = request.session.get('barbeiro_id')
-    
-    if not barbeiro_id:
-        return redirect('login_view', tipo='barbeiro')
-
-    try:
-        barbeiro_logado = Barbeiro.objects.get(id=barbeiro_id)
-    except Barbeiro.DoesNotExist:
-        return redirect('login_view', tipo='barbeiro')
-    
-    agendamentos = Agendamento.objects.filter(barbeiro=barbeiro_logado).order_by('hora')
-    
-    context = {
-        'barbeiro': barbeiro_logado,
-        'agendamentos': agendamentos,
-        'total_hoje': agendamentos.count(),
-    }
-    return render(request, 'agenda/home_barbeiro.html', context)
 
 
 # ==================== HOME CLIENTE ====================
 def home_cliente(request):
     if 'usuario_id' not in request.session:
-        return redirect('login_view', tipo='cliente')
+        return redirect('login')
     
     nome_cliente = request.session.get('user_nome', 'Cliente')
     
@@ -91,25 +63,11 @@ def home_cliente(request):
 
 
 # ==================== LOGIN ====================
-=======
-        if len(senha) < 4:
-            messages.error(request, "Senha muito curta")
-            return render(request, 'agenda/cadastrar.html')
-
-        Usuario.objects.create(nome=nome, telefone=telefone, data_nascimento=data_nascimento, senha=senha)
-        messages.success(request, "Cadastro efetuado!")
-        return redirect('login') # Redireciona para o name='login' do seu urls.py
-
-    return render(request, 'agenda/cadastrar.html')
-
-# LOGIN
->>>>>>> de6dd1e325a0b573f26f48be6076f527350fba23
 def login_view(request, tipo='cliente'): 
     if request.method == 'POST':
         telefone = re.sub(r'\D', '', request.POST.get('telefone', ""))
         senha = request.POST.get('senha')
 
-<<<<<<< HEAD
         telefone_limpo = re.sub(r'\D', '', telefone) if telefone else ""
         
         if telefone_limpo == "11922223333" and senha == "ad123":
@@ -140,19 +98,6 @@ def login_view(request, tipo='cliente'):
         except (Usuario.DoesNotExist, Barbeiro.DoesNotExist):
             messages.error(request, "Telefone ou senha inválidos")
             return render(request, 'agenda/login.html', {'tipo': tipo})
-=======
-        try:
-            if tipo == 'barbeiro':
-                user = Barbeiro.objects.get(telefone=telefone, senha=senha)
-                request.session['barbeiro_id'] = user.id
-                return redirect('home_barbeiro')
-            else:
-                user = Usuario.objects.get(telefone=telefone, senha=senha)
-                request.session['usuario_id'] = user.id
-                return redirect('home') # 'home' é o agendar no seu urls.py
-        except:
-            messages.error(request, "Dados inválidos")
->>>>>>> de6dd1e325a0b573f26f48be6076f527350fba23
     
     return render(request, 'agenda/login.html', {'tipo': tipo})
     
@@ -258,13 +203,11 @@ def logout_cliente(request):
             pass
     return redirect('login')
 
-<<<<<<< HEAD
-=======
 # HOME BARBEIRO (KANBAN)
 def home_barbeiro(request):
     barbeiro_id = request.session.get('barbeiro_id')
     if not barbeiro_id: 
-        return redirect('login_barbeiro')
+        return redirect('login')
 
     try:
         barbeiro_logado = Barbeiro.objects.get(id=barbeiro_id)
@@ -278,7 +221,7 @@ def home_barbeiro(request):
         }
         return render(request, 'agenda/home_barbeiro.html', context)
     except Barbeiro.DoesNotExist:
-        return redirect('login_barbeiro')
+        return redirect('login')
 
 # AJAX PARA O KANBAN
 @csrf_exempt
@@ -293,34 +236,4 @@ def atualizar_status_agendamento(request):
         except Exception as e:
             return JsonResponse({'status': 'erro', 'message': str(e)}, status=400)
 
-# TELA DE AGENDAMENTO (CLIENTE)
-def agendar(request):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        return redirect('login')
 
-    if request.method == 'POST':
-        barbeiro_id = request.POST.get('barbeiro')
-        data_hora = request.POST.get('data')
-        
-        try:
-            # Busca as instâncias dos objetos
-            cliente = Usuario.objects.get(id=usuario_id)
-            barbeiro = Barbeiro.objects.get(id=barbeiro_id)
-            
-            # Cria o agendamento no banco
-            Agendamento.objects.create(
-                usuario=cliente,
-                barbeiro=barbeiro,
-                data=data_hora,
-                status='pendentes' # Começa sempre como pendente para o Kanban
-            )
-            messages.success(request, "Agendamento realizado com sucesso!")
-            return redirect('home')
-        except Exception as e:
-            messages.error(request, f"Erro ao agendar: {e}")
-
-    # Puxa os barbeiros para aparecerem na tela
-    barbeiros = Barbeiro.objects.all()
-    return render(request, 'agenda/agendar.html', {'barbeiros': barbeiros})
->>>>>>> de6dd1e325a0b573f26f48be6076f527350fba23
