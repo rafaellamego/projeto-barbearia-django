@@ -245,15 +245,16 @@
                 </div>
 
             <div class="tabs">
-            <a href="{% url 'login' %}" 
+                <a href="{% url 'login' %}" 
                 class="tab-btn {% if tipo != 'barbeiro' %}active{% endif %}">
                 Sou Cliente
                 </a>
-                <a href="/?tipo=barbeiro"
+                <!-- AQUI ESTÁ O DETALHE: Troque href="/?tipo=barbeiro" por {% url 'login_barbeiro' %} -->
+                <a href="{% url 'login_barbeiro' %}"
                 class="tab-btn {% if tipo == 'barbeiro' %}active{% endif %}">
                 Sou Barbeiro
                 </a>
-        </div>
+            </div>
 
                 {% if messages %}
                   <ul class="messages">

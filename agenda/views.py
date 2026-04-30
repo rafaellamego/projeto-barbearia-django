@@ -1,37 +1,30 @@
 import datetime
+import re
+import json
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .models import Agendamento, Usuario, Barbeiro, Servico
-from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Usuario, Barbeiro, Agendamento
-import re
-import json
+from .models import Agendamento, Usuario, Barbeiro, Servico
 
-# CADASTRO
+# ==================== CADASTRO ====================
 def cadastrar(request):
     if request.method == 'POST':
         nome = request.POST.get("nome")
-        telefone = request.POST.get("telefone")
+        telefone = re.sub(r'\D', '', request.POST.get("telefone", ""))
         data_nascimento = request.POST.get("data_nascimento")
         senha = request.POST.get("senha")
 
-        # Evita o erro de UNIQUE constraint (telefone duplicado)
         if Usuario.objects.filter(telefone=telefone).exists():
             messages.error(request, "Este telefone já está cadastrado!")
             return render(request, 'agenda/cadastrar.html', {'nome': nome})
 
-        if not telefone.isdigit() or len(telefone) != 11:
-            messages.error(request, "Telefone deve ter 11 números")
+        if len(telefone) != 11:
+            messages.error(request, "Telefone deve ter 11 números (DDD + número)")
             return render(request, 'agenda/cadastrar.html')
         
         elif len(senha) < 4:
             messages.error(request, "Senha muito curta")
-            return render(request, 'agenda/cadastrar.html')
-
-        elif Usuario.objects.filter(telefone=telefone).exists():
-            messages.error(request, "Usuário já cadastrado")
             return render(request, 'agenda/cadastrar.html')
 
         else:
@@ -47,6 +40,41 @@ def cadastrar(request):
     return render(request, 'agenda/cadastrar.html')
 
 
+# ==================== LOGIN ====================
+def login_view(request, tipo='cliente'): 
+    if request.method == 'POST':
+        telefone_limpo = re.sub(r'\D', '', request.POST.get('telefone', ""))
+        senha = request.POST.get('senha')
+
+        try:
+            if tipo == 'barbeiro':
+                # Verifica primeiro o usuário de teste fixo para o barbeiro
+                if telefone_limpo == "11922223333" and senha == "ad123":
+                    barbeiro = Barbeiro.objects.filter(telefone=telefone_limpo).first()
+                    if barbeiro:
+                        request.session['barbeiro_id'] = barbeiro.id
+                        request.session['tipo_usuario'] = 'barbeiro'
+                        return redirect('home_barbeiro')
+                
+                # Login normal para outros barbeiros
+                barbeiro = Barbeiro.objects.get(telefone=telefone_limpo, senha=senha)
+                request.session['barbeiro_id'] = barbeiro.id
+                request.session['tipo_usuario'] = 'barbeiro'
+                return redirect('home_barbeiro')
+            
+            else:
+                # Login para Clientes (Tabela Usuario)
+                usuario = Usuario.objects.get(telefone=telefone_limpo, senha=senha)
+                request.session['usuario_id'] = usuario.id
+                request.session['user_nome'] = usuario.nome
+                request.session['tipo_usuario'] = 'cliente'
+                return redirect('home_cliente')
+                
+        except (Usuario.DoesNotExist, Barbeiro.DoesNotExist):
+            messages.error(request, "Telefone ou senha inválidos")
+            return render(request, 'agenda/login.html', {'tipo': tipo})
+    
+    return render(request, 'agenda/login.html', {'tipo': tipo})
 
 
 # ==================== HOME CLIENTE ====================
@@ -55,57 +83,23 @@ def home_cliente(request):
         return redirect('login')
     
     nome_cliente = request.session.get('user_nome', 'Cliente')
+    return render(request, 'agenda/home_cliente.html', {'nome_cliente': nome_cliente})
+
+
+# ==================== TELA DE AGENDAMENTO ====================
+def agendamento(request):
+    if 'usuario_id' not in request.session:
+        return redirect('login')
     
-    context = {
-        'nome_cliente': nome_cliente,
-    }
-    return render(request, 'agenda/home_cliente.html', context)
+    barbeiros = Barbeiro.objects.all()
+    servicos = Servico.objects.all()
+    return render(request, 'agenda/agendar.html', {
+        'barbeiros': barbeiros,
+        'servicos': servicos,
+    })
 
 
-# ==================== LOGIN ====================
-def login_view(request, tipo='cliente'): 
-    if request.method == 'POST':
-        telefone = re.sub(r'\D', '', request.POST.get('telefone', ""))
-        senha = request.POST.get('senha')
-
-        telefone_limpo = re.sub(r'\D', '', telefone) if telefone else ""
-        
-        if telefone_limpo == "11922223333" and senha == "ad123":
-            barbeiro = Barbeiro.objects.filter(telefone=telefone_limpo).first()
-            if barbeiro:
-                request.session['barbeiro_id'] = barbeiro.id
-                request.session['tipo_usuario'] = 'barbeiro'
-                print(f"SESSÃO CRIADA: tipo_usuario = barbeiro")  # Debug
-                return redirect('home_barbeiro')
-            else:
-                messages.error(request, "Barbeiro teste não encontrado no banco.")
-
-        try:
-            if tipo == 'barbeiro':
-                barbeiro = Barbeiro.objects.get(telefone=telefone_limpo, senha=senha)
-                request.session['barbeiro_id'] = barbeiro.id
-                request.session['tipo_usuario'] = 'barbeiro'
-                print(f"SESSÃO CRIADA: tipo_usuario = barbeiro")
-                return redirect('home_barbeiro')
-            else:
-                usuario = Usuario.objects.get(telefone=telefone_limpo, senha=senha)
-                request.session['usuario_id'] = usuario.id
-                request.session['user_nome'] = usuario.nome
-                request.session['tipo_usuario'] = 'cliente'
-                print(f"SESSÃO CRIADA: tipo_usuario = cliente")
-                return redirect('home_cliente')
-                
-        except (Usuario.DoesNotExist, Barbeiro.DoesNotExist):
-            messages.error(request, "Telefone ou senha inválidos")
-            return render(request, 'agenda/login.html', {'tipo': tipo})
-    
-    return render(request, 'agenda/login.html', {'tipo': tipo})
-    
-    return render(request, 'agenda/login.html', {'tipo': tipo})
-
-
-
-# ==================== BUSCAR HORÁRIOS ====================
+# ==================== BUSCAR HORÁRIOS (AJAX) ====================
 def get_horarios_disponiveis(request):
     barbeiro_id = request.GET.get('barbeiro_id')
     data = request.GET.get('data')
@@ -137,14 +131,13 @@ def get_horarios_disponiveis(request):
 def salvar_agendamento(request):
     if request.method == 'POST':
         usuario_id = request.session.get('usuario_id')
-        
+        if not usuario_id:
+            return redirect('login')
+            
         barbeiro_id = request.POST.get('barbeiro_id')
         servico_id = request.POST.get('servico_id')
         data = request.POST.get('data')
         hora = request.POST.get('horario')
-        
-        if not usuario_id:
-            return redirect('login_view', tipo='cliente')
         
         if Agendamento.objects.filter(barbeiro_id=barbeiro_id, data=data, hora=hora).exists():
             messages.error(request, 'Este horário já foi reservado!')
@@ -167,43 +160,16 @@ def salvar_agendamento(request):
 # ==================== MEUS AGENDAMENTOS ====================
 def meus_agendamentos(request):
     if 'usuario_id' not in request.session:
-        return redirect('login_view', tipo='cliente')
+        return redirect('login')
     
     agendamentos = Agendamento.objects.filter(
         usuario_id=request.session['usuario_id']
     ).select_related('barbeiro', 'servico').order_by('-data', '-hora')
     
-    return render(request, 'agenda/meus_agendamentos.html', {
-        'agendamentos': agendamentos
-    })
+    return render(request, 'agenda/meus_agendamentos.html', {'agendamentos': agendamentos})
 
 
-
-# ==================== TELA DE AGENDAMENTO ====================
-def agendamento(request):
-    if 'usuario_id' not in request.session:
-        return redirect('login_view', tipo='cliente')
-    
-    barbeiros = Barbeiro.objects.all()
-    servicos = Servico.objects.all()
-    
-    return render(request, 'agenda/agendar.html', {
-        'barbeiros': barbeiros,
-        'servicos': servicos,
-    })
-
-
-
-# ==================== LOGOUT ====================
-def logout_cliente(request):
-    request.session.flush()
-    messages.success(request, "Você saiu do sistema!")
-    storage = messages.get_messages(request)
-    for _ in storage:
-            pass
-    return redirect('login')
-
-# HOME BARBEIRO (KANBAN)
+# ==================== HOME BARBEIRO (KANBAN) ====================
 def home_barbeiro(request):
     barbeiro_id = request.session.get('barbeiro_id')
     if not barbeiro_id: 
@@ -215,15 +181,16 @@ def home_barbeiro(request):
 
         context = {
             'barbeiro': barbeiro_logado,
-            'pendentes': agendamentos.filter(status='pendentes'),
+            'pendentes': agendamentos.filter(status='pendente'), # Ajustado para bater com seu banco
             'execucao': agendamentos.filter(status='execucao'),
-            'concluidos': agendamentos.filter(status='concluidos'),
+            'concluidos': agendamentos.filter(status='concluido'),
         }
         return render(request, 'agenda/home_barbeiro.html', context)
     except Barbeiro.DoesNotExist:
         return redirect('login')
 
-# AJAX PARA O KANBAN
+
+# ==================== AJAX PARA O KANBAN ====================
 @csrf_exempt
 def atualizar_status_agendamento(request):
     if request.method == 'POST':
@@ -237,3 +204,8 @@ def atualizar_status_agendamento(request):
             return JsonResponse({'status': 'erro', 'message': str(e)}, status=400)
 
 
+# ==================== LOGOUT ====================
+def logout_cliente(request):
+    request.session.flush()
+    messages.success(request, "Você saiu do sistema!")
+    return redirect('login')

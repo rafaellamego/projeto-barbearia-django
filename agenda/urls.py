@@ -4,6 +4,9 @@ from . import views
 urlpatterns = [
     # --- LOGIN E CADASTRO ---
     path('', views.login_view, name='login'),
+    # ADICIONE ESTA LINHA ABAIXO:
+    path('barbeiro/', views.login_view, {'tipo': 'barbeiro'}, name='login_barbeiro'),
+    
     path('cadastrar/', views.cadastrar, name='cadastrar'),
     path('logout_cliente/', views.logout_cliente, name='logout_cliente'),
 
@@ -16,8 +19,5 @@ urlpatterns = [
 
     # --- ROTAS DO BARBEIRO ---
     path('home/barbeiro/', views.home_barbeiro, name='home_barbeiro'),
-    path('atualizar_status_agendamento/', views.atualizar_status_agendamento, name='atualizar_status_agendamento'),
-    # --- AJAX (KANBAN) ---
-    # Essa rota é essencial para o JavaScript conseguir salvar a mudança de coluna no banco!
     path('atualizar_status_agendamento/', views.atualizar_status_agendamento, name='atualizar_status_agendamento'),
 ]
