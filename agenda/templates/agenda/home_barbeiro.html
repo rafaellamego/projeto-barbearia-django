@@ -119,7 +119,9 @@
         .glass-card:active { cursor: grabbing; }
         .sortable-ghost { opacity: 0.3; transform: scale(0.9); }
 
-        .time-slot { color: var(--purple-bright); font-weight: bold; margin-bottom: 5px; }
+        .date-slot { color: var(--purple-bright); font-weight: bold; margin-top: 5px; }
+        .time-slot { color: var(--purple-bright); font-weight: bold; margin-left: 120px; }
+        
         .client-details h3 { margin: 0; font-size: 1rem; }
         .client-details span { font-size: 0.8rem; opacity: 0.6; }
 
@@ -135,6 +137,7 @@
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 0.8rem; }
         .calendar-grid div { padding: 5px 0; }
         .today { background: var(--purple-bright); border-radius: 5px; font-weight: bold; }
+        .agdt  { background: var(--border-glass); border-radius: 7px; font-weight: bold;}
 
         @media (max-width: 1024px) {
             .sidebar { width: 80px; }
@@ -192,7 +195,8 @@
                 <div class="sortable-list" id="pendentes" style="min-height: 350px;">
                     {% for card in pendentes %}
                     <div class="glass-card" data-id="{{ card.id }}">
-                        <div class="time-slot">{{ card.hora|time:"H:i" }}</div>
+                        <span class="date-slot">{{ card.data|date:"d/m/Y" }}</span><span class="time-slot">{{ card.hora|time:"H:i" }}</span>
+                         
                         <div class="client-details">
                             <h3>{{ card.usuario.nome }}</h3>
                             <span>Agendado</span>
@@ -307,7 +311,10 @@
                 dayDiv.innerText = i;
                 if (i === hoje.getDate() && month === hoje.getMonth() && year === hoje.getFullYear()) {
                     dayDiv.classList.add('today');
-                }
+
+                }//]else (i == {{card.data}} ){
+                    //dayDiv.classList.add('agdt');}
+
                 calendarGrid.appendChild(dayDiv);
             }
         }
