@@ -1,45 +1,79 @@
-# 💈 Sistema de Agendamento - Agenda Aí
+# 💈 Agenda Aí - Sistema de Agendamento para Barbearia
 
-Este é um sistema de gerenciamento de barbearia desenvolvido com **Django** e **MySQL**. O projeto permite o cadastro e acesso de clientes, profissionais (barbeiros) e, em breve, a reserva de horários.
+Projeto Integrador (PI) da **Univesp**. Aplicação web em **Python/Django** para agendamento de horários em barbearia: o cliente escolhe o serviço, o barbeiro, o dia e o horário, e o barbeiro administra a própria agenda.
 
-## 🚀 Funcionalidades Atuais
-- **Painel do Cliente:** Tela de agendamento com interface moderna (Glassmorphism).
-- **Painel do Barbeiro:** Área restrita para profissionais visualizarem sua agenda.
-- **Autenticação:** Sistema de login diferenciado para clientes e barbeiros.
-- **Banco de Dados:** Integração completa com MySQL.
+🌐 **Aplicação no ar:** http://147.15.102.248
 
-## 🛠️ Tecnologias Utilizadas
-- **Backend:** Python 3.x e Django 4.x
-- **Frontend:** HTML5, CSS3 (Design de vidro roxo) e FontAwesome para ícones.
-- **Banco de Dados:** MySQL 8.0
-- **Ambiente de Desenvolvimento:** Windows 7 / VS Code
+## 🚀 Funcionalidades
 
-## 🔧 Como rodar o projeto localmente
+**Já disponíveis**
+- **Login e cadastro** separados para clientes e barbeiros
+- **Painel do cliente:** novo agendamento e "Meus agendamentos"
+- **Horários livres sem recarregar a página:** a tela de agendamento busca os horários disponíveis no servidor com JavaScript
+- **Painel do barbeiro:** visualização da agenda e confirmação de agendamentos
 
-1. **Clone o repositório:**
-   ```bash
-   git clone [https://github.com/rafaellamego/projeto-barbearia-django.git](https://github.com/rafaellamego/projeto-barbearia-django)
-   ```
+**Em desenvolvimento (entrega em 06/11/2026)**
+- Barbeiro define os dias e horários em que trabalha e liga ou desliga a própria agenda
+- Agendamento em etapas (serviço → barbeiro → dia → horário), mostrando só o que está disponível
+- Acessibilidade em todas as telas: botões para aumentar e diminuir o tamanho da letra
 
-2. **Instale as dependências:**
-    ```bash
-    pip install -r requirements.txt
-    ```
+## 🛠️ Tecnologias
 
-3. **Configure o Banco de Dados:**
-    Crie um banco de dados no MySQL chamado barbearia_agenda.
-    Ajuste as credenciais no arquivo settings.py (USER e PASSWORD).
+| Camada | Tecnologia |
+| --- | --- |
+| Backend | Python 3 e Django 4.2 |
+| Frontend | HTML5, CSS3, JavaScript e FontAwesome |
+| Banco de dados | MySQL 8.0 no servidor; SQLite no desenvolvimento local |
+| Servidor | Docker Compose, Gunicorn e Nginx numa VM da Oracle Cloud |
 
-4. **Execute as migrações do Django:**
-    ```bash
-    python manage.py migrate
-    ```
+## 🔧 Como rodar na sua máquina
 
-5. **Inicie o servidor:**
-    ```bash
-    python manage.py runserver
-    ```
+Não é preciso instalar MySQL nem Docker: localmente o projeto usa SQLite.
 
+**1. Baixe o projeto**
+```bash
+git clone -b integracao-oracle https://github.com/rafaellamego/projeto-barbearia-django.git agenda-ai
+cd agenda-ai
+```
+
+**2. Crie o ambiente e instale as dependências**
+
+Windows:
+```bash
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+copy .env.example .env
+```
+
+Linux ou Mac:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+**3. Edite o arquivo `.env`**, mudando duas linhas:
+- `DJANGO_DEBUG=False` → `DJANGO_DEBUG=True`
+- `# DB_ENGINE=sqlite` → `DB_ENGINE=sqlite`
+
+**4. Crie o banco e rode**
+```bash
+python manage.py migrate
+python manage.py loaddata inicial.json
+python manage.py runserver
+```
+
+Acesse http://127.0.0.1:8000. Usuário de teste: telefone `15900020002`, senha `cliente`.
+
+## 🤝 Como a equipe trabalha
+
+- O **GitHub é a única fonte do código**. Só o responsável pelo servidor atualiza a VM da Oracle, a partir do branch `integracao-oracle`.
+- Sempre `git pull` antes de começar.
+- Cada equipe trabalha no seu branch (`equipe-barbeiro`, `equipe-cliente`, `equipe-agendamento`) e envia as mudanças por pull request para o `integracao-oracle`.
+- Mudanças no `models.py` são combinadas no grupo antes. Quem altera um model gera a migração e envia as duas coisas juntas.
+- Nunca envie o `.env`, a pasta `venv` ou o `db.sqlite3`.
 
 ## 📸 Demonstração do Sistema
 
