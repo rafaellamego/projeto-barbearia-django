@@ -2,6 +2,8 @@
 from datetime import datetime, timedelta
 from pyexpat.errors import messages
 
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 from django.db import models
 import re
 
@@ -59,6 +61,62 @@ class Agendamento(models.Model):
     class Meta:
         # Impede o mesmo barbeiro de ter dois agendamentos no mesmo dia/hora
         unique_together = ['barbeiro', 'data', 'hora']
+
+    def clean(self):
+        """Validações de regras de negócio antes de salvar"""
+        super().clean()
+
+        if not self.data or not self.hora:
+            return 
+
+# 1. IMPEDIR AGENDAMENTOS EM HORÁRIOS PASSADOS
+        # Combina a data e hora do agendamento para comparar com o momento atual
+        fuso_horario_atual = timezone.localtime(timezone.now())
+        data_hora_agendamento = timezone.make_aware(
+            datetime.combine(self.data, self.hora),
+            fuso_horario_atual.tzinfo
+        )
+
+        if data_hora_agendamento < fuso_horario_atual:
+            raise ValidationError("Não é possível realizar um agendamento em uma data ou horário que já passou.")
+
+        # 2. VALIDAR SE O HORÁRIO ESTÁ DENTRO DA ESCALA DO BARBEIRO
+        if self.barbeiro:
+            # Descobre o dia da semana do agendamento (0 = Segunda, 6 = Domingo)
+            dia_semana_agendamento = self.data.weekday()
+            
+            # Busca a escala do barbeiro para aquele dia da semana
+            escala = EscalaBarbeiro.objects.filter(
+                barbeiro=self.barbeiro, 
+                dia_semana=dia_semana_agendamento
+            ).first()
+
+            # Se não houver escala cadastrada ou se o barbeiro estiver de folga (ativo=False)
+            if not escala or not escala.ativo:
+                raise ValidationError(f"O barbeiro {self.barbeiro.nome} não trabalha neste dia da semana.")
+
+            # Verifica se o horário escolhido está fora do expediente dele
+            horario_valido = True
+            if escala.horario_inicio and self.hora < escala.horario_inicio:
+                horario_valido = False
+            if escala.horario_fim and self.hora > escala.horario_fim:
+                horario_valido = False
+
+            if not horario_valido:
+                inicio = escala.horario_inicio.strftime('%H:%M') if escala.horario_inicio else "00:00"
+                fim = escala.horario_fim.strftime('%H:%M') if escala.horario_fim else "23:59"
+                raise ValidationError(
+                    f"Horário fora de escala. O barbeiro {self.barbeiro.nome} trabalha das {inicio} às {fim} neste dia."
+                )
+
+    def save(self, *args, **kwargs):
+        # Garante que o método clean() seja executado antes de salvar no banco de dados
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
+
+
     
     def __str__(self):
         """Como o agendamento aparece no admin/shell"""
