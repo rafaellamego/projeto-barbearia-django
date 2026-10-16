@@ -208,7 +208,125 @@
                     <div class="alert alert-{{ message.tags }}">{{ message }}</div>
                 {% endfor %}
             {% endif %}
+            
+            <form action="{% url 'salvar_agendamento' %}" method="POST">
+    {% csrf_token %}
 
+    <!-- Campo de Serviço (Dados do Banco) -->
+    <div class="mb-3">
+        <label for="servico" class="form-label">Serviço:</label>
+        <select id="servico" name="servico_id" class="form-select" required>
+            <option value="">-- Selecione --</option>
+            {% for servico in servicos %}
+                <option value="{{ servico.id }}">{{ servico.nome }} - R\$ {{ servico.valor }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Campo de Barbeiro (Dados do Banco) -->
+    <div class="mb-3">
+        <label for="barbeiro" class="form-label">Barbeiro:</label>
+        <select id="barbeiro" name="barbeiro_id" class="form-select" required>
+            <option value="">-- Selecione --</option>
+            {% for barbeiro in barbeiros %}
+                <option value="{{ barbeiro.id }}">{{ barbeiro.nome }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Campo de Data -->
+    <div class="mb-3">
+        <label for="data" class="form-label">Data:</label>
+        <input type="date" id="data" name="data" class="form-control" required>
+    </div>
+
+    <!-- Campo de Horário (Preenchido dinamicamente via JavaScript) -->
+    <div class="mb-3">
+        <label for="horario" class="form-label">Horário:</label>
+        <select id="horario" name="horario" class="form-select" required>
+            <option value="">-- Selecione uma data e barbeiro --</option>
+        </select>
+    </div>
+
+    <!-- Botões de Ação -->
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">Confirmar Agendamento</button>
+        <a href="{% url 'home_cliente' %}" class="btn btn-secondary">Voltar</a>
+    </div>
+</form>
+
+<!-- Integração do JavaScript para buscar horários em tempo real -->
+<script>
+    const barbeiroSelect = document.getElementById('barbeiro');
+    const dataInput = document.getElementById('data');
+    const horarioSelect = document.getElementById('horario');
+
+    // Bloqueia dias passados no calendário para evitar agendamentos retroativos
+    const hoje = new Date().toISOString().split('T')[0];
+    dataInput.setAttribute('min', hoje);
+
+    function buscarHorarios() {
+        const barbeiroId = barbeiroSelect.value;
+        const dataSelecionada = dataInput.value;
+
+        // Se falta um dos dois campos, limpa a seleção de horários
+        if (!barbeiroId || !dataSelecionada) {
+            horarioSelect.innerHTML = '<option value="">-- Selecione uma data e barbeiro --</option>';
+            return;
+        }
+
+        // Mostra estado de carregamento enquanto o Django responde
+        horarioSelect.innerHTML = '<option value="">Buscando horários disponíveis...</option>';
+
+        // Faz a requisição AJAX para a view checar_disponibilidade_view
+        // IMPORTANTE: Se o seu caminho no urls.py for diferente de '/agenda/checar-disponibilidade/', mude abaixo
+        const url = `{% url 'checar_disponibilidade' %}?barbeiro_id=${barbeiroId}&data=${dataSelecionada}`;
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error('Erro na resposta do servidor');
+                return response.json();
+            })
+            .then(data => {
+                horarioSelect.innerHTML = ''; // Limpa o texto de "Buscando..."
+
+                if (data.erro) {
+                    horarioSelect.innerHTML = `<option value="">Erro: ${data.erro}</option>`;
+                    return;
+                }
+
+                // Se o barbeiro estiver de folga (escala inativa) ou não tiver vagas livres
+                if (!data.disponivel || !data.horarios || data.horarios.length === 0) {
+                    horarioSelect.innerHTML = '<option value="">Nenhum horário disponível para este dia</option>';
+                    return;
+                }
+
+                // Cria a opção inicial neutra
+                horarioSelect.innerHTML = '<option value="">-- Selecione um horário --</option>';
+
+                // Alimenta o select com os horários que o seu backend gerou livres
+                data.horarios.forEach(horario => {
+                    const option = document.createElement('option');
+                    option.value = horario;
+                    option.textContent = horario;
+                    horarioSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Erro na requisição AJAX:', error);
+                horarioSelect.innerHTML = '<option value="">Erro ao carregar horários. Tente novamente.</option>';
+            });
+    }
+
+    // Dispara a busca automaticamente toda vez que mudarem o barbeiro ou a data
+    barbeiroSelect.addEventListener('change', buscarHorarios);
+    dataInput.addEventListener('change', buscarHorarios);
+</script>
+            
+            
+            
+            
+            <!--
             <form method="POST" action="{% url 'salvar_agendamento' %}" id="form-agendamento">
                 {% csrf_token %}
 
@@ -249,7 +367,7 @@
                 <a href="{% url 'home_cliente' %}" class="btn-secondary">
                     <i class="fas fa-arrow-left"></i> Voltar
                 </a>
-            </form>
+            </form> -->
         </div>
     </div>
 
@@ -295,5 +413,10 @@
             }
         });
     </script>
+
+
+
+
+
 </body>
 </html>

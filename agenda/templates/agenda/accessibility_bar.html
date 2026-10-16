@@ -1,0 +1,15 @@
+{% load static %}
+<div class="accessibility-controls" style="position: fixed; bottom: 10px; right: 20px; z-index: 9999; background: #fff; padding: 6px 12px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 8px;">
+    
+    <!-- Ícone de Acessibilidade -->
+    <img src="{% static 'acessibility-icon.png' %}" alt="Acessibilidade" style="width: 26px; height: 26px; object-fit: contain; margin-right: 8px;">
+
+    <!-- Botões existentes -->
+    <div>
+        <button id="btn-decrease-font" title="Diminuir Fonte" style="cursor: pointer; padding: 4px 10px; font-weight: bold; border: 1px solid #ccc; background: #f8f9fa; border-radius: 4px;">A-</button>
+        <button id="btn-reset-font" title="Tamanho Normal" style="cursor: pointer; padding: 4px 10px; font-weight: bold; border: 1px solid #ccc; background: #f8f9fa; border-radius: 4px; margin: 0 4px;">A</button>
+        <button id="btn-increase-font" title="Aumentar Fonte" style="cursor: pointer; padding: 4px 10px; font-weight: bold; border: 1px solid #ccc; background: #f8f9fa; border-radius: 4px;">A+</button>
+    </div>
+</div>
+
+<script src="{% static 'js/accessibility.js' %}"></script>
