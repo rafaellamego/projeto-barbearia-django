@@ -5,7 +5,11 @@ from pyexpat.errors import messages
 from django.db import models
 import re
 
+from django.contrib.auth.models import User 
+
 from django.http import JsonResponse #esse módulo trabalha com padrões de texto, como buscar, validar, extrair ou substituir partes de string ex.: texto="Meu númeri é 11987654321" resultado = re.search(r"\d+",texto) \d+ = pega uma seqência de números
+
+
 
 class Usuario(models.Model):
     nome = models.CharField(max_length=150)
@@ -24,6 +28,37 @@ class Barbeiro(models.Model):
 
     def __str__(self):
         return f"Barbeiro: {self.nome}"
+
+class EscalaBarbeiro(models.Model):
+    DIAS_SEMANA = [
+        (0, 'Segunda-feira'),
+        (1, 'Terça-feira'),
+        (2, 'Quarta-feira'),
+        (3, 'Quinta-feira'),
+        (4, 'Sexta-feira'),
+        (5, 'Sábado'),
+        (6, 'Domingo'),
+    ]
+    barbeiro = models.ForeignKey(Barbeiro, on_delete=models.CASCADE, related_name='escalas')
+    dia_semana = models.IntegerField(choices=DIAS_SEMANA)
+    horario_inicio = models.TimeField(null=True, blank=True, help_text="Início do expediente")
+    horario_fim = models.TimeField(null=True, blank=True, help_text="Fim do expediente")
+    
+    # Campo para Ativo/Folga (True = Trabalha, False = Folga)
+    ativo = models.BooleanField(default=True, verbose_name="Disponível para trabalho")
+
+    class Meta:
+        # Evita duplicar o mesmo dia da semana para o mesmo barbeiro
+        unique_together = ['barbeiro', 'dia_semana']
+        verbose_name = "Escala do Barbeiro"
+        verbose_name_plural = "Escalas dos Barbeiros"
+
+    def __str__(self):
+        status = "Ativo" if self.ativo else "Folga"
+        return f"{self.barbeiro.nome} - {self.get_dia_semana_display()} ({status})" 
+
+
+
 
 #Tabela com os serviços oferecidos (Corte, Barba, etc)
 class Servico(models.Model):
