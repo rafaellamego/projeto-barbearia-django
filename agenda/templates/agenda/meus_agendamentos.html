@@ -96,6 +96,10 @@
             background: #4caf50;
         }
 
+        .badge.concluido {
+            background: #5535cc; /* Laranja */
+        }
+
         .badge.cancelado {
             background: #f44336;
         }
@@ -221,6 +225,8 @@
                                     <span class="badge pendente">⏳ Pendente</span>
                                 {% elif a.status == 'confirmado' %}
                                     <span class="badge confirmado">✅ Confirmado</span>
+                                {% elif a.status == 'concluido' %}
+                                    <span class="badge concluido">✅ Concluído</span>
                                 {% elif a.status == 'cancelado' %}
                                     <span class="badge cancelado">❌ Cancelado</span>
                                 {% else %}

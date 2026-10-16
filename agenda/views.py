@@ -193,7 +193,7 @@ def home_barbeiro(request):
         context = {
             'barbeiro': barbeiro_logado,
             'pendentes': agendamentos.filter(status='pendente'), # Ajustado para bater com seu banco
-            'execucao': agendamentos.filter(status='execucao'),
+            'confirmados': agendamentos.filter(status='confirmado'),
             'concluidos': agendamentos.filter(status='concluido'),
         }
         return render(request, 'agenda/home_barbeiro.html', context)
