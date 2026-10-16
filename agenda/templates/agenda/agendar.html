@@ -80,6 +80,7 @@
             background: rgba(255,255,255,0.1);
             color: white;
             font-size: 1rem;
+            box-sizing: border-box;
         }
 
         select option {
@@ -137,10 +138,16 @@
             border-radius: 50px;
             text-decoration: none;
             font-weight: bold;
-            display: inline-block;
+            display: block;
             margin-top: 15px;
             width: 100%;
             text-align: center;
+            box-sizing: border-box; /* <--- Essencial para respeitar o padding dentro dos 100% */
+            transition: 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
         }
 
         .footer-social {
@@ -296,6 +303,22 @@
                 alert('Por favor, selecione um horário!');
             }
         });
+
+       /* criação de data limite de 30 dias no calendário de agendamento */ 
+       
+       // Pega a data de hoje no formato YYYY-MM-DD
+        const hoje = new Date().toISOString().split('T')[0];
+  
+        // Cria a data de daqui a 30 dias
+        const daqui30Dias = new Date();
+        daqui30Dias.setDate(daqui30Dias.getDate() + 30);
+        const maxDate = daqui30Dias.toISOString().split('T')[0];
+
+        // Aplica os limites min (hoje) e max (daqui a 30 dias) no input de data
+        const inputData = document.getElementById('data');
+        inputData.min = hoje;
+        inputData.max = maxDate; 
+
     </script>
 </body>
 </html>

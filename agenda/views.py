@@ -2,7 +2,7 @@ import datetime
 import re
 import json
 from django.http import JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from .models import Agendamento, Usuario, Barbeiro, Servico
@@ -97,6 +97,17 @@ def agendamento(request):
         'barbeiros': barbeiros,
         'servicos': servicos,
     })
+
+def cancelar_agendamento(request, agendamento_id):
+    if 'usuario_id' not in request.session:
+        return redirect('login')
+    
+    # Busca o agendamento garantindo que pertence ao usuário logado
+    agendamento = get_object_or_404(Agendamento, id=agendamento_id, usuario_id=request.session['usuario_id'])
+    
+    agendamento.delete()
+    messages.success(request, "Agendamento cancelado com sucesso!")
+    return redirect('meus_agendamentos')
 
 
 # ==================== BUSCAR HORÁRIOS (AJAX) ====================
