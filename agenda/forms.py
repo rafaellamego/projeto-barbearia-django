@@ -1,11 +1,9 @@
 import re
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms import modelformset_factory
+
 from .models import EscalaBarbeiro
-
-
-
+from django.forms import modelformset_factory
 class CadastroBarbeiroForm(forms.Form):
     nome_completo = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
     email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
@@ -29,6 +27,7 @@ class CadastroBarbeiroForm(forms.Form):
         if cleaned_data.get("senha") != cleaned_data.get("confirmar_senha"):
             raise ValidationError("As senhas não conferem.")
 
+########### Escala Barbeiro
 class EscalaBarbeiroForm(forms.ModelForm):
     class Meta:
         model = EscalaBarbeiro
@@ -50,3 +49,4 @@ EscalaFormSet = modelformset_factory(
     extra=0,
     can_delete=False
 )
+        

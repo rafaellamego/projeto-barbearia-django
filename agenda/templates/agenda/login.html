@@ -232,6 +232,7 @@
 </style>
 </head>
 <body>
+    {% include 'agenda/accessibility_bar.html' %}
 
     <div class="top-bar">Bem-vindo ao Agenda Aí, sua agenda eletrônica.</div>
 
@@ -268,7 +269,8 @@
                     {% csrf_token %}
                     <div class="input-wrapper">
                         <i class="fas fa-phone"></i>
-                        <input type="text" name="telefone" placeholder="Telefone (DDD + número)" required>
+                        <!-- <input type="text" name="telefone" placeholder="Telefone (DDD + número)" required> -->
+                        <input type="text" id="telefone" name="telefone" placeholder="Telefone (DDD + número)" required>
                     </div>
                     <div class="input-wrapper">
                         <i class="fas fa-lock"></i>
@@ -293,5 +295,7 @@
         </a>
     </div>
 
+    {% load static %}
+    <script src="{% static 'js/login.js' %}"></script>    
 </body>
 </html>

@@ -15,11 +15,11 @@ urlpatterns = [
     path('agendamento/', views.agendamento, name='agendamento'),
     path('salvar-agendamento/', views.salvar_agendamento, name='salvar_agendamento'),
     path('meus-agendamentos/', views.meus_agendamentos, name='meus_agendamentos'),
-    #path('get-horarios/', views.get_horarios_disponiveis, name='get_horarios'),
+    path('get-horarios/', views.get_horarios_disponiveis, name='get_horarios'),
+    path('cancelar-agendamento/<int:agendamento_id>/', views.cancelar_agendamento, name='cancelar_agendamento'),
 
     # --- ROTAS DO BARBEIRO ---
     path('gerencia/', views.gerencia, name='gerencia_barbeiro'),
     path('home/barbeiro/', views.home_barbeiro, name='home_barbeiro'),
     path('atualizar_status_agendamento/', views.atualizar_status_agendamento, name='atualizar_status_agendamento'),
-    path('api/checar-disponibilidade/', views.checar_disponibilidade_view, name='checar_disponibilidade'),
 ]

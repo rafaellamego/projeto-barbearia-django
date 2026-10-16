@@ -147,6 +147,7 @@
     </style>
 </head>
 <body>
+    {% include 'agenda/accessibility_bar.html' %}
 
     <nav class="sidebar">
         <h2>AGENDA AÍ</h2>
@@ -192,7 +193,7 @@
         <div class="kanban-container">
             <div class="kanban-column">
                 <div class="column-header"><i class="fas fa-clock"></i> Pendentes</div>
-                <div class="sortable-list" id="pendentes" style="min-height: 350px;">
+                <div class="sortable-list" id="pendentes" style="min-height: 150px;">
                     {% for card in pendentes %}
                     <div class="glass-card" data-id="{{ card.id }}">
                         <span class="date-slot">{{ card.data|date:"d/m/Y" }}</span><span class="time-slot">{{ card.hora|time:"H:i" }}</span>
@@ -207,8 +208,24 @@
             </div>
 
             <div class="kanban-column">
+                <div class="column-header"><i class="fas fa-cut"></i> Confirmado</div>
+                <div class="sortable-list" id="confirmado" style="min-height: 150px;">
+                    {% for card in confirmado %}
+                    <div class="glass-card" style="border-left: 4px solid #3b82f6;" data-id="{{ card.id }}">
+                        <div class="time-slot" style="color: #3b82f6;">{{ card.hora|time:"H:i" }}</div>
+                        <div class="client-details">
+                            <h3>{{ card.usuario.nome }}</h3>
+                            <span>confirmado</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+
+            <div class="kanban-column">
                 <div class="column-header"><i class="fas fa-cut"></i> Em execução</div>
-                <div class="sortable-list" id="execucao" style="min-height: 350px;">
+                <div class="sortable-list" id="execucao" style="min-height: 150px;">
                     {% for card in execucao %}
                     <div class="glass-card" style="border-left: 4px solid #3b82f6;" data-id="{{ card.id }}">
                         <div class="time-slot" style="color: #3b82f6;">{{ card.hora|time:"H:i" }}</div>
@@ -223,7 +240,7 @@
 
             <div class="kanban-column">
                 <div class="column-header"><i class="fas fa-check-double"></i> Concluídos</div>
-                <div class="sortable-list" id="concluidos" style="min-height: 350px;">
+                <div class="sortable-list" id="concluidos" style="min-height: 150px;">
                     {% for card in concluidos %}
                     <div class="glass-card" style="opacity: 0.6; border-left: 4px solid #10b981;" data-id="{{ card.id }}">
                         <div class="time-slot" style="color: #10b981;">{{ card.hora|time:"H:i" }}</div>
@@ -244,7 +261,7 @@
         document.getElementById('data-atual').innerText = hoje.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' });
 
         // 2. KANBAN (DRAG & DROP COM PERSISTÊNCIA)
-        const colunas = ['pendentes', 'execucao', 'concluidos'];
+        const colunas = ['pendentes', 'confirmado', 'execucao', 'concluidos'];
         colunas.forEach(id => {
             new Sortable(document.getElementById(id), {
                 group: 'kanban',
@@ -255,7 +272,7 @@
                     const novaColuna = evt.to.id;
 
                     // Envia para o servidor salvar no MySQL
-                    fetch('/atualizar-status-agendamento/', {
+                    fetch('/atualizar_status_agendamento/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

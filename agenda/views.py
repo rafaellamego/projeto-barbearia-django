@@ -2,15 +2,11 @@ import datetime
 import re
 import json
 from django.http import JsonResponse
-from datetime import datetime, timedelta
-
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
-from .models import EscalaBarbeiro, Agendamento, Usuario, Barbeiro, Servico
-from django.contrib.auth.models import User
-#from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
+from .models import Agendamento, Usuario, Barbeiro, Servico, EscalaBarbeiro
+
 from .models import EscalaBarbeiro
 from .forms import EscalaFormSet
 # ==================== CADASTRO ====================
@@ -104,74 +100,21 @@ def agendamento(request):
         'servicos': servicos,
     })
 
-def checar_disponibilidade_view(request):
-    barbeiro_id = request.GET.get('barbeiro_id')
-    data_str = request.GET.get('data') # Espera o formato YYYY-MM-DD
-
-    if not barbeiro_id or not data_str:
-        return JsonResponse({'erro': 'Parâmetros ausentes'}, status=400)
-
-    try:
-        data_selecionada = datetime.strptime(data_str, '%Y-%m-%d').date()
-        barbeiro = Barbeiro.objects.get(id=barbeiro_id)
-    except (ValueError, Barbeiro.DoesNotExist):
-        return JsonResponse({'erro': 'Dados inválidos'}, status=400)
-
-    # 1. Identifica o dia da semana (0 = Segunda, 6 = Domingo)
-    dia_semana_num = data_selecionada.weekday()
-
-    # 2. Busca a regra de escala do barbeiro para este dia específico
-    try:
-        escala = EscalaBarbeiro.objects.get(barbeiro=barbeiro, dia_semana=dia_semana_num)
-    except EscalaBarbeiro.DoesNotExist:
-        # Se não há escala cadastrada, o barbeiro não trabalha neste dia
-        return JsonResponse({'disponivel': False, 'horarios': []})
-
-    # 3. Se estiver marcado expressamente como folga, bloqueia a data
-    if not escala.ativo:
-        return JsonResponse({'disponivel': False, 'horarios': []})
-
-    # 4. Busca os horários que JÁ ESTÃO AGENDADOS para esse barbeiro nesse dia
-    horarios_ocupados = Agendamento.objects.filter(
-        barbeiro=barbeiro,
-        data=data_selecionada
-    ).values_list('horario', flat=True) 
-    # Transforma os horários ocupados em uma lista de strings para comparação direta
-    horarios_ocupados_list = [h.strftime('%H:%M') for h in horarios_ocupados]
-
-    # 5. Gera os blocos (slots) de horários com base no início e fim do expediente
-    horarios_disponiveis = []
-    atual = datetime.combine(data_selecionada, escala.horario_inicio)
-    fim = datetime.combine(data_selecionada, escala.horario_fim)
-    intervalo = timedelta(minutes=30) # Tempo médio padrão por corte/serviço
-
-    while atual < fim:
-        horario_str = atual.time().strftime('%H:%M')
-        
-        # Só adiciona o horário se ele NÃO estiver na lista de ocupados
-        if horario_str not in horarios_ocupados_list:
-            horarios_disponiveis.append(horario_str)
-            
-        atual += intervalo
-
-    # Retorna para o JavaScript se a data é válida e quais horários estão livres
-    data = request.GET.get('data')
-    data = data
-    return JsonResponse({
-        'disponivel': True,
-        'horarios': horarios_disponiveis
-    })
-
-
-
+def cancelar_agendamento(request, agendamento_id):
+    if 'usuario_id' not in request.session:
+        return redirect('login')
+    
+    # Busca o agendamento garantindo que pertence ao usuário logado
+    agendamento = get_object_or_404(Agendamento, id=agendamento_id, usuario_id=request.session['usuario_id'])
+    
+    agendamento.delete()
+    messages.success(request, "Agendamento cancelado com sucesso!")
+    return redirect('meus_agendamentos')
 
 
 # ==================== BUSCAR HORÁRIOS (AJAX) ====================
-"""def get_horarios_disponiveis(request):
+def get_horarios_disponiveis(request):
     barbeiro_id = request.GET.get('barbeiro_id')
-    
-
-
     data = request.GET.get('data')
     
     if not barbeiro_id or not data:
@@ -196,7 +139,7 @@ def checar_disponibilidade_view(request):
     
     return JsonResponse({'horarios': horarios_disponiveis})
 
-"""
+
 # ==================== SALVAR AGENDAMENTO ====================
 def salvar_agendamento(request):
     if request.method == 'POST':
@@ -240,6 +183,27 @@ def meus_agendamentos(request):
 
 
 # ==================== HOME BARBEIRO (KANBAN) ====================
+def home_barbeiro(request):
+    barbeiro_id = request.session.get('barbeiro_id')
+    if not barbeiro_id: 
+        return redirect('login')
+
+    try:
+        barbeiro_logado = Barbeiro.objects.get(id=barbeiro_id)
+        agendamentos = Agendamento.objects.filter(barbeiro=barbeiro_logado)
+
+        context = {
+            'barbeiro': barbeiro_logado,
+            'pendentes': agendamentos.filter(status='pendente'), # Ajustado para bater com seu banco
+            'confirmado': agendamentos.filter(status='confirmado'),
+            'execucao': agendamentos.filter(status='execucao'),
+            'concluidos': agendamentos.filter(status='concluido'),
+        }
+        return render(request, 'agenda/home_barbeiro.html', context)
+    except Barbeiro.DoesNotExist:
+        return redirect('login')
+
+# GERENCIA ==========================================================
 def gerencia(request):
     #def gerencia(request):
     # 1. Busca o barbeiro logado na sessão
@@ -291,24 +255,7 @@ def gerencia(request):
 
 
 
-def home_barbeiro(request):
-    barbeiro_id = request.session.get('barbeiro_id')
-    if not barbeiro_id: 
-        return redirect('login')
 
-    try:
-        barbeiro_logado = Barbeiro.objects.get(id=barbeiro_id)
-        agendamentos = Agendamento.objects.filter(barbeiro=barbeiro_logado)
-
-        context = {
-            'barbeiro': barbeiro_logado,
-            'pendentes': agendamentos.filter(status='pendente'), # Ajustado para bater com seu banco
-            'execucao': agendamentos.filter(status='execucao'),
-            'concluidos': agendamentos.filter(status='concluido'),
-        }
-        return render(request, 'agenda/home_barbeiro.html', context)
-    except Barbeiro.DoesNotExist:
-        return redirect('login')
 
 
 # ==================== AJAX PARA O KANBAN ====================
@@ -330,47 +277,3 @@ def logout_cliente(request):
     request.session.flush()
     messages.success(request, "Você saiu do sistema!")
     return redirect('login')
-
-
-#@login_required
-def home_barbeiro_view(request):
-    # Garante que estamos lidando apenas com as escalas do barbeiro que está logado
-    #barbeiro = request.user
-    # Garante que estamos lidando apenas com as escalas do barbeiro que está logado via sessão
-    barbeiro_id = request.session.get('barbeiro_id')
-    if not barbeiro_id:
-        return redirect('login')
-        
-    try:
-        barbeiro = Barbeiro.objects.get(id=barbeiro_id)
-    except Barbeiro.DoesNotExist:
-        return redirect('login')
-        
-    # Verifica se o barbeiro já possui os 7 dias cadastrados. Se não, cria a estrutura inicial.
-    queryset_escala = EscalaBarbeiro.objects.filter(barbeiro=barbeiro).order_by('dia_semana')
-    if queryset_escala.count() < 7:
-        dias_existentes = queryset_escala.values_list('dia_semana', flat=True)
-        for dia in range(7):
-            if dia not in dias_existentes:
-                EscalaBarbeiro.objects.create(
-                    barbeiro=barbeiro,
-                    dia_semana=dia,
-                    horario_inicio="08:00:00",
-                    horario_fim="18:00:00",
-                    ativo=False # Começa como folga por padrão
-                )
-        # Atualiza o queryset após criar os dias faltantes
-        queryset_escala = EscalaBarbeiro.objects.filter(barbeiro=barbeiro).order_by('dia_semana')
-
-    # Processa o salvamento dos horários
-    if request.method == 'POST':
-        formset = EscalaFormSet(request.POST, queryset=queryset_escala)
-        if formset.is_valid():
-            # Salva as alterações feitas pelo barbeiro
-            formset.save()
-            return redirect('home_barbeiro') # Recarrega a página com sucesso
-    else:
-        # Renderiza o formulário com os dados atuais salvos no banco
-        formset = EscalaFormSet(queryset=queryset_escala)
-
-    return render(request, 'home_barbeiro.html', {'formset': formset})
