@@ -40,9 +40,12 @@ class Servico(models.Model):
 class Agendamento(models.Model):
     # Opções de status (como um menu de escolhas)
     STATUS_CHOICES = [
-        ('pendente', 'Pendente'),    # Aguardando confirmação
+        ('pendentes', 'Pendente'),    # Aguardando confirmação
         ('confirmado', 'Confirmado'),  # Confirmado pelo barbeiro
-        ('cancelado', 'Cancelado'),   # Cancelado pelo cliente
+        ('execucao', 'Em Execução'),
+        ('concluidos', 'Concluído'),  # Cancelado pelo cliente
+        ('cancelado', 'Cancelado'),
+        
     ]
     
     # Ligações com outras tabelas (Foreign Keys = Chaves Estrangeiras)
@@ -53,7 +56,7 @@ class Agendamento(models.Model):
     # Dados do agendamento
     data = models.DateField()  # Dia do agendamento
     hora = models.TimeField()  # Horário do agendamento
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')  # Situação atual
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendentes')  # Situação atual
     
     # Metadados (informações automáticas)
     observacao = models.TextField(blank=True, null=True)  # Recado do cliente (opcional)
@@ -92,8 +95,8 @@ class Agendamento(models.Model):
             ).first()
 
             # Se não houver escala cadastrada ou se o barbeiro estiver de folga (ativo=False)
-            if not escala or not escala.ativo:
-                raise ValidationError(f"O barbeiro {self.barbeiro.nome} não trabalha neste dia da semana.")
+            #if not escala or not escala.ativo:
+            #    raise ValidationError(f"O barbeiro {self.barbeiro.nome} não trabalha neste dia da semana.")
 
             # Verifica se o horário escolhido está fora do expediente dele
             horario_valido = True
@@ -102,17 +105,17 @@ class Agendamento(models.Model):
             if escala.horario_fim and self.hora > escala.horario_fim:
                 horario_valido = False
 
-            if not horario_valido:
-                inicio = escala.horario_inicio.strftime('%H:%M') if escala.horario_inicio else "00:00"
-                fim = escala.horario_fim.strftime('%H:%M') if escala.horario_fim else "23:59"
-                raise ValidationError(
-                    f"Horário fora de escala. O barbeiro {self.barbeiro.nome} trabalha das {inicio} às {fim} neste dia."
-                )
+            #if not horario_valido:
+            #    inicio = escala.horario_inicio.strftime('%H:%M') if escala.horario_inicio else "00:00"
+            #    fim = escala.horario_fim.strftime('%H:%M') if escala.horario_fim else "23:59"
+            #    raise ValidationError(
+             #       f"Horário fora de escala. O barbeiro {self.barbeiro.nome} trabalha das {inicio} às {fim} neste dia."
+             #   )
 
-    def save(self, *args, **kwargs):
+    #def save(self, *args, **kwargs):
         # Garante que o método clean() seja executado antes de salvar no banco de dados
-        self.full_clean()
-        super().save(*args, **kwargs)
+     #   self.full_clean()
+      #  super().save(*args, **kwargs)
 
 
 

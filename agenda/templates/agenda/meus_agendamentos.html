@@ -217,7 +217,7 @@
                             <td>{{ a.barbeiro.nome }}</td>
                             <td>R$ {{ a.servico.valor }}</td>
                             <td>
-                                {% if a.status == 'pendente' %}
+                                {% if a.status == 'pendentes' %}
                                     <span class="badge pendente">⏳ Pendente</span>
                                 {% elif a.status == 'confirmado' %}
                                     <span class="badge confirmado">✅ Confirmado</span>

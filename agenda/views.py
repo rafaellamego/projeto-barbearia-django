@@ -264,10 +264,10 @@ def home_barbeiro(request):
 
         context = {
             'barbeiro': barbeiro_logado,
-            'pendentes': agendamentos.filter(status='pendente'), # Ajustado para bater com seu banco
+            'pendentes': agendamentos.filter(status='pendentes'), # Ajustado para bater com seu banco
             'confirmado': agendamentos.filter(status='confirmado'),
             'execucao': agendamentos.filter(status='execucao'),
-            'concluidos': agendamentos.filter(status='concluido'),
+            'concluidos': agendamentos.filter(status='concluidos'),
         }
         return render(request, 'agenda/home_barbeiro.html', context)
     except Barbeiro.DoesNotExist:
