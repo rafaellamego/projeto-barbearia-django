@@ -5,8 +5,12 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
-from .models import Agendamento, Usuario, Barbeiro, Servico
+from .models import Agendamento, Usuario, Barbeiro, Servico, EscalaBarbeiro
 
+
+from django.utils import timezone
+from .models import EscalaBarbeiro
+from .forms import EscalaFormSet
 # ==================== CADASTRO ====================
 def cadastrar(request):
     if request.method == 'POST':
@@ -113,6 +117,74 @@ def cancelar_agendamento(request, agendamento_id):
 # ==================== BUSCAR HORÁRIOS (AJAX) ====================
 def get_horarios_disponiveis(request):
     barbeiro_id = request.GET.get('barbeiro_id')
+    data_str = request.GET.get('data')
+    
+    if not barbeiro_id or not data_str:
+        return JsonResponse({'error': 'Parâmetros faltando'}, status=400)
+    
+    try:
+        # Converte a string de data para um objeto datetime.date
+        data_selecionada = datetime.datetime.strptime(data_str, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({'error': 'Formato de data inválido'}, status=400)
+
+    # 1. PEGAR A ESCALA DO BARBEIRO PARA O DIA DA SEMANA SELECIONADO
+    dia_semana = data_selecionada.weekday()  # 0=Segunda, 6=Domingo
+    escala = EscalaBarbeiro.objects.filter(barbeiro_id=barbeiro_id, dia_semana=dia_semana).first()
+
+    # Se não houver escala cadastrada ou se o barbeiro estiver de folga, retorna nenhum horário
+    if not escala or not escala.ativo:
+        return JsonResponse({'horarios': []})
+
+    # Pega os horários de início e fim da escala do banco de dados
+    escala_inicio = escala.horario_inicio
+    escala_fim = escala.horario_fim
+
+    # 2. PEGAR HORÁRIOS QUE JÁ ESTÃO RESERVADOS NO BANCO
+    horarios_reservados = Agendamento.objects.filter(
+        barbeiro_id=barbeiro_id,
+        data=data_selecionada
+    ).values_list('hora', flat=True)
+    
+    horarios_reservados_str = [h.strftime('%H:%M') for h in horarios_reservados]
+    
+    # 3. CONVERTER HORA ATUAL SE FOR O DIA DE HOJE (Para evitar agendar no passado)
+    agora = timezone.localtime(timezone.now())
+    hoje = agora.date()
+    hora_atual_relogio = agora.time()
+
+    horarios_disponiveis = []
+    
+    # Define o loop baseado na escala do barbeiro (se não houver hora definida, usa padrão)
+    hora_loop = datetime.datetime.combine(data_selecionada, escala_inicio or datetime.time(9, 0))
+    hora_limite = datetime.datetime.combine(data_selecionada, escala_fim or datetime.time(19, 0))
+    
+    # 4. LOOP DE FILTRAGEM DOS HORÁRIOS
+    while hora_loop <= hora_limite:
+        slot_time = hora_loop.time()
+        horario_str = slot_time.strftime('%H:%M')
+
+        # Regra A: O horário NÃO pode estar reservado
+        nao_reservado = horario_str not in horarios_reservados_str
+        
+        # Regra B: Se for HOJE, o horário do slot deve ser maior que o horário atual do relógio
+        no_futuro = True
+        if data_selecionada == hoje:
+            no_futuro = slot_time > hora_atual_relogio
+
+        # Se passar em todas as validações, exibe na tela
+        if nao_reservado and no_futuro:
+            horarios_disponiveis.append(horario_str)
+            
+        hora_loop += datetime.timedelta(minutes=30)
+    
+    return JsonResponse({'horarios': horarios_disponiveis})
+
+
+
+
+"""def get_horarios_disponiveis(request):
+    barbeiro_id = request.GET.get('barbeiro_id')
     data = request.GET.get('data')
     
     if not barbeiro_id or not data:
@@ -135,7 +207,7 @@ def get_horarios_disponiveis(request):
             horarios_disponiveis.append(horario_str)
         hora_atual += datetime.timedelta(minutes=30)
     
-    return JsonResponse({'horarios': horarios_disponiveis})
+    return JsonResponse({'horarios': horarios_disponiveis}) """
 
 
 # ==================== SALVAR AGENDAMENTO ====================
@@ -193,12 +265,67 @@ def home_barbeiro(request):
         context = {
             'barbeiro': barbeiro_logado,
             'pendentes': agendamentos.filter(status='pendente'), # Ajustado para bater com seu banco
-            'confirmados': agendamentos.filter(status='confirmado'),
+            'confirmado': agendamentos.filter(status='confirmado'),
+            'execucao': agendamentos.filter(status='execucao'),
             'concluidos': agendamentos.filter(status='concluido'),
         }
         return render(request, 'agenda/home_barbeiro.html', context)
     except Barbeiro.DoesNotExist:
         return redirect('login')
+
+# GERENCIA ==========================================================
+def gerencia(request):
+    #def gerencia(request):
+    # 1. Busca o barbeiro logado na sessão
+    barbeiro_id = request.session.get('barbeiro_id')
+    if not barbeiro_id: 
+        return redirect('login')
+
+    try:
+        barbeiro_logado = Barbeiro.objects.get(id=barbeiro_id)
+    except Barbeiro.DoesNotExist:
+        return redirect('login')
+    
+    # 2. Busca as escalas já existentes para este barbeiro
+    queryset_escala = EscalaBarbeiro.objects.filter(barbeiro=barbeiro_logado).order_by('dia_semana')
+    
+    # 3. Se ele ainda não tiver os 7 dias cadastrados no banco, cria com horários padrão
+    if queryset_escala.count() < 7:
+        dias_existentes = queryset_escala.values_list('dia_semana', flat=True)
+        for dia in range(7):
+            if dia not in dias_existentes:
+                EscalaBarbeiro.objects.create(
+                    barbeiro=barbeiro_logado,
+                    dia_semana=dia,
+                    horario_inicio="08:00",  # Horário padrão inicial
+                    horario_fim="18:00",     # Horário padrão final
+                    ativo=True               # Ativo por padrão
+                )
+        # Atualiza a lista após criar os dias que faltavam
+        queryset_escala = EscalaBarbeiro.objects.filter(barbeiro=barbeiro_logado).order_by('dia_semana')
+
+    # 4. Processa o salvamento quando o barbeiro clica em "Salvar"
+    if request.method == 'POST':
+        formset = EscalaFormSet(request.POST, queryset=queryset_escala)
+        if formset.is_valid():
+            formset.save()
+            messages.success(request, "Sua escala de trabalho foi salva com sucesso!")
+            return redirect('gerencia_barbeiro') # Recarrega a página atualizando os dados
+    else:
+        # Se for um acesso normal (GET), apenas carrega os dados atuais do banco
+        formset = EscalaFormSet(queryset=queryset_escala)
+
+    # CORRIGIDO: Agora enviamos o 'formset' e os dados do 'barbeiro' dentro do contexto para o HTML
+    context = {
+        'formset': formset,
+        'barbeiro': barbeiro_logado
+    }
+    return render(request, 'agenda/gerencia.html', context)
+
+
+
+
+
 
 
 # ==================== AJAX PARA O KANBAN ====================

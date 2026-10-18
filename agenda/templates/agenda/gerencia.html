@@ -1,0 +1,206 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Agenda de Trabalho - Agenda Aí</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        html {
+            background-color: #0a0519;
+        }
+        body {
+            background: linear-gradient(rgba(25,10,40,0.75), rgba(10,5,25,0.85)), url('{% static "fundo_barbearia.png" %}') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            color: white;
+            padding-bottom: 75px;
+        }
+
+        .top-bar {
+            background: rgba(40,20,60,0.3);
+            backdrop-filter: blur(25px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-bar a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            opacity: 0.7;
+        }
+
+        .top-bar a:hover {
+            opacity: 1;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 25px;
+            padding: 40px;
+        }
+
+        .card h2 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .card h2 i {
+            color: #764ba2;
+            margin-right: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            color: #764ba2;
+            font-weight: bold;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-danger {
+            color: #f44336;
+        }
+
+        .small {
+            font-size: 0.85rem;
+        }
+
+        .text-muted {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 12px 35px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-block;
+            transition: 0.3s;
+            border: none;
+            cursor: pointer;
+            margin-top: 25px;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(56,239,125,0.4);
+        }
+
+        @media (max-width: 768px) {
+            th, td {
+                padding: 8px;
+                font-size: 0.9rem;
+            }
+            .card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. CORREÇÃO: Barra de topo com as divs fechadas corretamente -->
+    <div class="top-bar">
+        <span>💈 Agenda Aí - Gerencia</span>
+        <div>
+            <a href="{% url 'home_barbeiro' %}">Sair</a>
+        </div>
+    </div>
+
+    <!-- Conteúdo principal envelopado na estrutura correta -->
+    <div class="container">
+        <div class="card">
+            <h2><i class="fa-solid fa-calendar-days"></i> Minha Agenda de Trabalho</h2>
+            <p class="text-muted" style="text-align: center;">Configure abaixo os seus dias de atendimento e horários de expediente.</p>
+
+            <form method="POST" action="">
+                {% csrf_token %}
+                <!-- Obrigatório para o funcionamento do Formset no Django -->
+                {{ formset.management_form }}
+
+                <table class="table table-bordered align-middle">
+                    <thead class=""table-light">
+                        <tr>
+                            <th>Dia da Semana</th>
+                            <th>Horário de Início</th>
+                            <th>Horário de Término</th>
+                            <th>Trabalha neste dia?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for form in formset %}
+                            <tr>
+                                <!-- Campo oculto com o ID do registro no banco -->
+                                {{ form.id }}
+                                {{ form.dia_semana }}
+                                <td>
+                                    <!-- Exibe o texto amigável do dia da semana (Segunda, Terça, etc) -->
+                                    <strong>{{ form.instance.get_dia_semana_display }}</strong>
+                                    <!-- Mantém o campo real oculto apenas para validação de envio do Django -->
+                                    <div style="display:none;">{{ form.dia_semana }}</div>
+                                </td>
+                                <td>
+                                    {{ form.horario_inicio }}
+                                    {% if form.horario_inicio.errors %}
+                                        <div class="text-danger small">{{ form.horario_inicio.errors }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ form.horario_fim }}
+                                    {% if form.horario_fim.errors %}
+                                        <div class="text-danger small">{{ form.horario_fim.errors }}</div>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="form-check d-inline-block">
+                                        {{ form.ativo }}
+                                    </div>
+                                    <label class="form-check-label d-block small text-muted">
+                                        Marque para Ativo / Desmarque para Folga
+                                    </label>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div style="text-align: center;">
+                    <button type="submit" class="btn btn-success">Salvar Minha Escala</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

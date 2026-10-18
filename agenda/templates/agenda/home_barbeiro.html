@@ -151,7 +151,7 @@
 
     <nav class="sidebar">
         <h2>AGENDA AÍ</h2>
-        <a href="#" class="menu-item active">
+        <a href="{% url 'gerencia_barbeiro' %}" class="menu-item">
             <i class="fas fa-th-large"></i> <span>Gerência</span>
         </a>
         <a href="{% url 'cadastrar' %}" class="menu-item">
@@ -193,7 +193,7 @@
         <div class="kanban-container">
             <div class="kanban-column">
                 <div class="column-header"><i class="fas fa-clock"></i> Pendentes</div>
-                <div class="sortable-list" id="pendentes" style="min-height: 350px;">
+                <div class="sortable-list" id="pendente" style="min-height: 150px;">
                     {% for card in pendentes %}
                     <div class="glass-card" data-id="{{ card.id }}">
                         <span class="date-slot">{{ card.data|date:"d/m/Y" }}</span><span class="time-slot">{{ card.hora|time:"H:i" }}</span>
@@ -208,10 +208,25 @@
             </div>
 
             <div class="kanban-column">
-                <!-- <div class="column-header"><i class="fas fa-cut"></i> Em execução</div> -->
                 <div class="column-header"><i class="fas fa-cut"></i> Confirmado</div>
-                <div class="sortable-list" id="confirmado" style="min-height: 350px;">
-                    {% for card in confirmados %}
+                <div class="sortable-list" id="confirmado" style="min-height: 150px;">
+                    {% for card in confirmado %}
+                    <div class="glass-card" style="border-left: 4px solid #3b82f6;" data-id="{{ card.id }}">
+                        <div class="time-slot" style="color: #3b82f6;">{{ card.hora|time:"H:i" }}</div>
+                        <div class="client-details">
+                            <h3>{{ card.usuario.nome }}</h3>
+                            <span>confirmado</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+
+            <div class="kanban-column">
+                <div class="column-header"><i class="fas fa-cut"></i> Em execução</div>
+                <div class="sortable-list" id="execucao" style="min-height: 150px;">
+                    {% for card in execucao %}
                     <div class="glass-card" style="border-left: 4px solid #3b82f6;" data-id="{{ card.id }}">
                         <div class="time-slot" style="color: #3b82f6;">{{ card.hora|time:"H:i" }}</div>
                         <div class="client-details">
@@ -225,7 +240,7 @@
 
             <div class="kanban-column">
                 <div class="column-header"><i class="fas fa-check-double"></i> Concluídos</div>
-                <div class="sortable-list" id="concluidos" style="min-height: 350px;">
+                <div class="sortable-list" id="concluido" style="min-height: 150px;">
                     {% for card in concluidos %}
                     <div class="glass-card" style="opacity: 0.6; border-left: 4px solid #10b981;" data-id="{{ card.id }}">
                         <div class="time-slot" style="color: #10b981;">{{ card.hora|time:"H:i" }}</div>
@@ -246,7 +261,7 @@
         document.getElementById('data-atual').innerText = hoje.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' });
 
         // 2. KANBAN (DRAG & DROP COM PERSISTÊNCIA)
-        const colunas = ['pendentes', 'confirmado', 'concluidos'];
+        const colunas = ['pendente', 'confirmado', 'execucao', 'concluido'];
         colunas.forEach(id => {
             new Sortable(document.getElementById(id), {
                 group: 'kanban',
@@ -254,58 +269,25 @@
                 ghostClass: 'sortable-ghost',
                 onEnd: function (evt) {
                     const agendamentoId = evt.item.getAttribute('data-id');
-                    //const novaColuna = evt.to.id;
-                    let novaColuna = evt.to.id; 
+                    const novaColuna = evt.to.id;
 
-                    // Padroniza caso o id tenha letras no plural que o banco não usa
-                    let statusBanco = novaColuna;
-                    if (novaColuna === 'pendentes') {
-                        statusBanco = 'pendente';
-                    } else if (novaColuna === 'confirmado') {
-                        statusBanco = 'confirmado';
-                    } else if (novaColuna === 'concluidos') {
-                        statusBanco = 'concluido';
-                    }
-                    
                     // Envia para o servidor salvar no MySQL
                     fetch('/atualizar_status_agendamento/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRFToken': getCookie('csrftoken') // <--- ADICIONADO: Token de segurança do Django
                         },
                         body: JSON.stringify({
                             id: agendamentoId,
-                            status: statusBanco
+                            status: novaColuna
                         })
                     })
                     .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'sucesso') {
-                            location.reload(); // Atualiza a tela para fixar o card e atualizar os contadores
-                        } else {
-                            alert('Erro ao atualizar o status.');
-                        }
-                    });
+                    .then(data => console.log('Salvo:', data))
+                    .catch(err => console.error('Erro ao salvar:', err));
                 }
             });
         });
-
-        // Função auxiliar para capturar o CSRF token dos cookies do Django
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
 
         // 3. ZONA DE EXCLUSÃO
         new Sortable(document.getElementById('delete-zone'), {

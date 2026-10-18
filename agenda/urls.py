@@ -19,6 +19,7 @@ urlpatterns = [
     path('cancelar-agendamento/<int:agendamento_id>/', views.cancelar_agendamento, name='cancelar_agendamento'),
 
     # --- ROTAS DO BARBEIRO ---
+    path('gerencia/', views.gerencia, name='gerencia_barbeiro'),
     path('home/barbeiro/', views.home_barbeiro, name='home_barbeiro'),
     path('atualizar_status_agendamento/', views.atualizar_status_agendamento, name='atualizar_status_agendamento'),
 ]

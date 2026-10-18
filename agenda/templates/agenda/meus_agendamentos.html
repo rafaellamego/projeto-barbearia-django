@@ -225,6 +225,8 @@
                                     <span class="badge pendente">⏳ Pendente</span>
                                 {% elif a.status == 'confirmado' %}
                                     <span class="badge confirmado">✅ Confirmado</span>
+                                {% elif a.status == 'execucao' %}
+                                    <span class="badge confirmado">✂️ Em atendimento</span>
                                 {% elif a.status == 'concluido' %}
                                     <span class="badge concluido">✅ Concluído</span>
                                 {% elif a.status == 'cancelado' %}
