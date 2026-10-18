@@ -89,7 +89,7 @@
             border: 1px solid var(--border-glass);
             border-radius: 20px;
             padding: 15px;
-            width: 280px;
+            width: 180px;
             min-height: 450px;
         }
 
@@ -120,7 +120,7 @@
         .sortable-ghost { opacity: 0.3; transform: scale(0.9); }
 
         .date-slot { color: var(--purple-bright); font-weight: bold; margin-top: 5px; }
-        .time-slot { color: var(--purple-bright); font-weight: bold; margin-left: 120px; }
+        .time-slot { color: var(--purple-bright); font-weight: bold; margin-left: 70px; }
         
         .client-details h3 { margin: 0; font-size: 1rem; }
         .client-details span { font-size: 0.8rem; opacity: 0.6; }
@@ -173,7 +173,7 @@
         <div class="top-header">
             <div class="date-info">
                 <h1 style="font-size: small;">Bem vindo, {{ barbeiro.nome }}</h1>
-                <h1 style="font-size: 1.5rem;">Agenda de Hoje</h1>
+                <h1 style="font-size: 1.5rem;">Agendamentos</h1>
                 <p>Hoje é: <span id="data-atual"></span></p>
             </div>
 
@@ -193,14 +193,14 @@
         <div class="kanban-container">
             <div class="kanban-column">
                 <div class="column-header"><i class="fas fa-clock"></i> Pendentes</div>
-                <div class="sortable-list" id="pendentes" style="min-height: 150px;">
+                <div class="sortable-list" id="pendentes" style="min-height: 120px;">
                     {% for card in pendentes %}
                     <div class="glass-card" data-id="{{ card.id }}">
-                        <span class="date-slot">{{ card.data|date:"d/m/Y" }}</span><span class="time-slot">{{ card.hora|time:"H:i" }}</span>
+                        <span class="date-slot">{{ card.data|date:"d/m" }}</span><span class="time-slot">{{ card.hora|time:"H:i" }}</span>
                          
                         <div class="client-details">
                             <h3>{{ card.usuario.nome }}</h3>
-                            <span>Agendado</span>
+                            
                         </div>
                     </div>
                     {% endfor %}
@@ -209,13 +209,14 @@
 
             <div class="kanban-column">
                 <div class="column-header"><i class="fas fa-cut"></i> Confirmado</div>
-                <div class="sortable-list" id="confirmado" style="min-height: 150px;">
+                <div class="sortable-list" id="confirmado" style="min-height: 120px;">
                     {% for card in confirmado %}
-                    <div class="glass-card" style="border-left: 4px solid #3b82f6;" data-id="{{ card.id }}">
-                        <div class="time-slot" style="color: #3b82f6;">{{ card.hora|time:"H:i" }}</div>
+                    <div class="glass-card" style="border-left: 4px solid #3bbbf6;" data-id="{{ card.id }}">
+                        <span class="date-slot">{{ card.data|date:"d/m" }}</span><span class="time-slot">{{ card.hora|time:"H:i" }}</span>
+                        
                         <div class="client-details">
                             <h3>{{ card.usuario.nome }}</h3>
-                            <span>confirmado</span>
+                            
                         </div>
                     </div>
                     {% endfor %}
@@ -225,13 +226,13 @@
 
             <div class="kanban-column">
                 <div class="column-header"><i class="fas fa-cut"></i> Em execução</div>
-                <div class="sortable-list" id="execucao" style="min-height: 150px;">
+                <div class="sortable-list" id="execucao" style="min-height: 120px;">
                     {% for card in execucao %}
                     <div class="glass-card" style="border-left: 4px solid #3b82f6;" data-id="{{ card.id }}">
-                        <div class="time-slot" style="color: #3b82f6;">{{ card.hora|time:"H:i" }}</div>
+                        <span class="date-slot">{{ card.data|date:"d/m" }}</span><span class="time-slot">{{ card.hora|time:"H:i" }}</span>
                         <div class="client-details">
                             <h3>{{ card.usuario.nome }}</h3>
-                            <span>Atendimento</span>
+                            
                         </div>
                     </div>
                     {% endfor %}
@@ -240,13 +241,13 @@
 
             <div class="kanban-column">
                 <div class="column-header"><i class="fas fa-check-double"></i> Concluídos</div>
-                <div class="sortable-list" id="concluidos" style="min-height: 150px;">
+                <div class="sortable-list" id="concluidos" style="min-height: 120px;">
                     {% for card in concluidos %}
                     <div class="glass-card" style="opacity: 0.6; border-left: 4px solid #10b981;" data-id="{{ card.id }}">
-                        <div class="time-slot" style="color: #10b981;">{{ card.hora|time:"H:i" }}</div>
+                        <span class="date-slot">{{ card.data|date:"d/m" }}</span><span class="time-slot">{{ card.hora|time:"H:i" }}</span>
                         <div class="client-details">
                             <h3>{{ card.usuario.nome }}</h3>
-                            <span>Concluído</span>
+                            
                         </div>
                     </div>
                     {% endfor %}
