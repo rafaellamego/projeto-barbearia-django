@@ -291,7 +291,8 @@
                             container.append(btn);
                         });
                     } else {
-                        container.html('<p style="color: rgba(255,255,255,0.7);">Nenhum horário disponível nesta data.</p>');
+                        var aviso = response.folga ? 'O barbeiro não atende neste dia. Escolha outra data.' : 'Nenhum horário disponível nesta data.';
+                        container.html('<p style="color: rgba(255,255,255,0.7);">' + aviso + '</p>');
                     }
                 });
             }

@@ -132,13 +132,18 @@ def get_horarios_disponiveis(request):
     dia_semana = data_selecionada.weekday()  # 0=Segunda, 6=Domingo
     escala = EscalaBarbeiro.objects.filter(barbeiro_id=barbeiro_id, dia_semana=dia_semana).first()
 
-    # Se não houver escala cadastrada ou se o barbeiro estiver de folga, retorna nenhum horário
-    if not escala or not escala.ativo:
-        return JsonResponse({'horarios': []})
-
-    # Pega os horários de início e fim da escala do banco de dados
-    escala_inicio = escala.horario_inicio
-    escala_fim = escala.horario_fim
+    if escala:
+        # Barbeiro já configurou a escala: respeita a folga e os horários dele
+        if not escala.ativo:
+            return JsonResponse({'horarios': [], 'folga': True})
+        escala_inicio = escala.horario_inicio
+        escala_fim = escala.horario_fim
+    else:
+        # Escala ainda não configurada: usa o padrão (segunda a sábado, 08:00 às 18:00)
+        if dia_semana == 6:  # domingo
+            return JsonResponse({'horarios': [], 'folga': True})
+        escala_inicio = datetime.time(8, 0)
+        escala_fim = datetime.time(18, 0)
 
     # 2. PEGAR HORÁRIOS QUE JÁ ESTÃO RESERVADOS NO BANCO
     horarios_reservados = Agendamento.objects.filter(
@@ -299,7 +304,7 @@ def gerencia(request):
                     dia_semana=dia,
                     horario_inicio="08:00",  # Horário padrão inicial
                     horario_fim="18:00",     # Horário padrão final
-                    ativo=True               # Ativo por padrão
+                    ativo=(dia != 6)         # Padrão: segunda a sábado; domingo de folga
                 )
         # Atualiza a lista após criar os dias que faltavam
         queryset_escala = EscalaBarbeiro.objects.filter(barbeiro=barbeiro_logado).order_by('dia_semana')
