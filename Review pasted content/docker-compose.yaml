@@ -1,0 +1,53 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: barbearia_mysql
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      # Bind em 127.0.0.1: a porta NAO fica exposta na internet.
+      # Para usar Workbench/DBeaver do seu micro, abra um tunel SSH:
+      #   ssh -i chave.key -L 3306:127.0.0.1:3306 ubuntu@147.15.102.248
+      - "127.0.0.1:3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  web:
+    build: .
+    container_name: barbearia_web
+    restart: always
+    env_file:
+      - .env
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 60 barbearia.wsgi:application"
+    ports:
+      # O nginx da VM escuta na porta 80 e repassa para ca.
+      # O bind em 127.0.0.1 impede que alguem alcance o gunicorn direto pela 8000.
+      # Se voce REMOVER o nginx, troque esta linha por:  - "80:8000"
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
+  media_data:

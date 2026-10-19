@@ -1,0 +1,344 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Barbeiro - Agenda Aí</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    
+    <style>
+        :root {
+            --purple-glass: rgba(168, 85, 247, 0.2);
+            --purple-bright: #a855f7;
+            --border-glass: rgba(255, 255, 255, 0.15);
+        }
+
+        html { background-color: #0a0519; }
+        body {
+            background: linear-gradient(rgba(25,10,40,0.8), rgba(10,5,25,0.9)), url('{% static "fundo_barbearia.png" %}') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            color: white;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: rgba(20, 10, 30, 0.6);
+            backdrop-filter: blur(30px);
+            border-right: 1px solid var(--border-glass);
+            display: flex;
+            flex-direction: column;
+            padding: 30px 20px;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .sidebar h2 { font-size: 1.2rem; margin-bottom: 40px; color: var(--purple-bright); text-align: center; }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+        }
+
+        .menu-item i { font-size: 1.2rem; margin-right: 15px; width: 25px; }
+        .menu-item:hover { background: var(--purple-glass); color: white; }
+        .menu-item.active { background: var(--purple-glass); border-left: 4px solid var(--purple-bright); color: white; }
+
+        main {
+            flex: 1;
+            margin-left: 260px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .top-header {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+        }
+
+        .kanban-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .kanban-column {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 15px;
+            width: 280px;
+            min-height: 450px;
+        }
+
+        .column-header {
+            text-align: center;
+            padding: 10px 0 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .column-header i { font-size: 1.5rem; margin-bottom: 10px; color: var(--purple-bright); }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: grab;
+            transition: 0.2s;
+        }
+
+        .glass-card:active { cursor: grabbing; }
+        .sortable-ghost { opacity: 0.3; transform: scale(0.9); }
+
+        .date-slot { color: var(--purple-bright); font-weight: bold; margin-top: 5px; }
+        .time-slot { color: var(--purple-bright); font-weight: bold; margin-left: 120px; }
+        
+        .client-details h3 { margin: 0; font-size: 1rem; }
+        .client-details span { font-size: 0.8rem; opacity: 0.6; }
+
+        .calendar-glass {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            border-radius: 15px;
+            padding: 15px;
+            width: 220px;
+        }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 0.9rem; }
+        .calendar-header button { background: none; border: none; color: white; cursor: pointer; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 0.8rem; }
+        .calendar-grid div { padding: 5px 0; }
+        .today { background: var(--purple-bright); border-radius: 5px; font-weight: bold; }
+        .agdt  { background: var(--border-glass); border-radius: 7px; font-weight: bold;}
+
+        @media (max-width: 1024px) {
+            .sidebar { width: 80px; }
+            .sidebar h2, .menu-item span { display: none; }
+            main { margin-left: 80px; }
+        }
+    </style>
+</head>
+<body>
+    {% include 'agenda/accessibility_bar.html' %}
+
+    <nav class="sidebar">
+        <h2>AGENDA AÍ</h2>
+        <a href="{% url 'gerencia_barbeiro' %}" class="menu-item">
+            <i class="fas fa-th-large"></i> <span>Gerência</span>
+        </a>
+        <a href="{% url 'cadastrar' %}" class="menu-item">
+            <i class="fas fa-plus-circle"></i> <span>Adicionar Agendamento Manualmente</span>
+        </a>
+
+        <div id="delete-zone" class="menu-item" style="border: 1px dashed rgba(255,0,0,0.3); margin-top: 20px;">
+            <i class="fas fa-trash-alt" style="color: #ff4d4d;"></i> <span>Excluir (Solte aqui)</span>
+        </div>
+        
+        <div style="margin-top: auto;">
+            <a href="{% url 'login' %}" class="menu-item">
+                <i class="fas fa-sign-out-alt"></i> <span>Sair</span>
+            </a>
+        </div>
+    </nav>
+
+    <main>
+        <div class="top-header">
+            <div class="date-info">
+                <h1 style="font-size: 0.875rem;">Bem vindo, {{ barbeiro.nome }}</h1>
+                <h1 style="font-size: 1.5rem;">Agenda de Hoje</h1>
+                <p>Hoje é: <span id="data-atual"></span></p>
+            </div>
+
+            <div class="calendar-glass">
+                <div class="calendar-header">
+                    <button id="prevMonth"><i class="fas fa-caret-left"></i></button>
+                    <span id="monthDisplay">Abril 2026</span>
+                    <button id="nextMonth"><i class="fas fa-caret-right"></i></button>
+                </div>
+                <div class="calendar-grid" id="calendarGrid">
+                    <div style="opacity: 0.5;">D</div><div style="opacity: 0.5;">S</div><div style="opacity: 0.5;">T</div>
+                    <div style="opacity: 0.5;">Q</div><div style="opacity: 0.5;">Q</div><div style="opacity: 0.5;">S</div><div style="opacity: 0.5;">S</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="kanban-container">
+            <div class="kanban-column">
+                <div class="column-header"><i class="fas fa-clock"></i> Pendentes</div>
+                <div class="sortable-list" id="pendentes" style="min-height: 150px;">
+                    {% for card in pendente %}
+                    <div class="glass-card" data-id="{{ card.id }}">
+                        <span class="date-slot">{{ card.data|date:"d/m" }}</span><span class="time-slot">{{ card.hora|time:"H:i" }}</span>
+                            <div class="client-details">
+                            <h3>{{ card.usuario.nome }}</h3>
+                            <!--<span>Agendado</span>-->
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="kanban-column">
+                <div class="column-header"><i class="fas fa-cut"></i> Confirmado</div>
+                <div class="sortable-list" id="confirmado" style="min-height: 150px;">
+                    {% for card in confirmado %}
+                    <div class="glass-card" style="border-left: 4px solid #3b82f6;" data-id="{{ card.id }}">
+                        <span class="date-slot">{{ card.data|date:"d/m" }}</span><span class="time-slot">{{ card.hora|time:"H:i" }}</span>
+                        <div class="client-details">
+                            <h3>{{ card.usuario.nome }}</h3>
+                            <!--<span>confirmado</span>-->
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+
+            <div class="kanban-column">
+                <div class="column-header"><i class="fas fa-cut"></i> Em execução</div>
+                <div class="sortable-list" id="execucao" style="min-height: 150px;">
+                    {% for card in execucao %}
+                    <div class="glass-card" style="border-left: 4px solid #3b82f6;" data-id="{{ card.id }}">
+                        <span class="date-slot">{{ card.data|date:"d/m" }}</span><span class="time-slot">{{ card.hora|time:"H:i" }}</span>
+                        <div class="client-details"> 
+                            <h3>{{ card.usuario.nome }}</h3>
+                            <!--<span>execucao</span>-->
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="kanban-column">
+                <div class="column-header"><i class="fas fa-check-double"></i> Concluídos</div>
+                <div class="sortable-list" id="concluidos" style="min-height: 150px;">
+                    {% for card in concluido %}
+                    <div class="glass-card" style="opacity: 0.6; border-left: 4px solid #10b981;" data-id="{{ card.id }}">
+                        <span class="date-slot">{{ card.data|date:"d/m" }}</span><span class="time-slot">{{ card.hora|time:"H:i" }}</span>
+                        <div class="client-details"> 
+                            <h3>{{ card.usuario.nome }}</h3>
+                            <!--<span>concluidos</span>-->
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 1. DATA ATUAL NO TOPO
+        const hoje = new Date();
+        document.getElementById('data-atual').innerText = hoje.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' });
+
+        // 2. KANBAN (DRAG & DROP COM PERSISTÊNCIA)
+        const colunas = ['pendente', 'confirmado', 'execucao', 'concluido'];
+        colunas.forEach(id => {
+            new Sortable(document.getElementById(id), {
+                group: 'kanban',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: function (evt) {
+                    const agendamentoId = evt.item.getAttribute('data-id');
+                    const novaColuna = evt.to.id;
+
+                    // Envia para o servidor salvar no MySQL
+                    fetch('/atualizar_status_agendamento/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            id: agendamentoId,
+                            status: novaColuna
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => console.log('Salvo:', data))
+                    .catch(err => console.error('Erro ao salvar:', err));
+                }
+            });
+        });
+
+        // 3. ZONA DE EXCLUSÃO
+        new Sortable(document.getElementById('delete-zone'), {
+            group: 'kanban',
+            onAdd: function (evt) {
+                if (confirm("Deseja excluir este agendamento?")) {
+                    evt.item.remove();
+                } else {
+                    evt.from.appendChild(evt.item);
+                }
+            }
+        });
+
+        // 4. CALENDÁRIO DINÂMICO
+        const monthDisplay = document.getElementById('monthDisplay');
+        const calendarGrid = document.getElementById('calendarGrid');
+        let currentDate = new Date();
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const firstDay = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+            
+            const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            monthDisplay.innerText = `${months[month]} ${year}`;
+
+            const headers = Array.from(calendarGrid.children).slice(0, 7);
+            calendarGrid.innerHTML = '';
+            headers.forEach(h => calendarGrid.appendChild(h));
+
+            for (let i = 0; i < firstDay; i++) {
+                calendarGrid.appendChild(document.createElement('div'));
+            }
+
+            for (let i = 1; i <= lastDate; i++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.innerText = i;
+                if (i === hoje.getDate() && month === hoje.getMonth() && year === hoje.getFullYear()) {
+                    dayDiv.classList.add('today');
+
+                }//]else (i == {{card.data}} ){
+                    //dayDiv.classList.add('agdt');}
+
+                calendarGrid.appendChild(dayDiv);
+            }
+        }
+
+        document.getElementById('prevMonth').onclick = () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); };
+        document.getElementById('nextMonth').onclick = () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); };
+
+        renderCalendar();
+    </script>
+</body>
+</html>

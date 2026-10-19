@@ -1,0 +1,194 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento Manual - Agenda Aí</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        html { background: #0a0519; }
+        body {
+            min-height: 100vh; margin: 0; padding-bottom: 2rem; color: #fff;
+            font-family: Arial, sans-serif; font-size: 1rem;
+            background: linear-gradient(rgba(25,10,40,.8), rgba(10,5,25,.9)), url('{% static "fundo_barbearia.png" %}') center / cover fixed;
+        }
+        header { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: 1rem 2rem; background: rgba(20,10,30,.75); }
+        header a { color: white; }
+        main { max-width: 54rem; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.35); border-radius: 1.25rem; padding: 2rem; }
+        h1 { font-size: 1.7rem; margin-top: 0; }
+        .field { margin: 1rem 0; }
+        label, legend { display: block; font-weight: 700; margin-bottom: .45rem; }
+        input:not([type="radio"]), select { box-sizing: border-box; width: 100%; padding: .75rem; border-radius: .5rem; border: 1px solid #b9a8c9; background: #241635; color: #fff; font: inherit; }
+        select option { background: #fff; color: #111; }
+        fieldset { border: 1px solid rgba(255,255,255,.3); border-radius: .75rem; padding: 1rem; margin: 1rem 0; }
+        .choice { display: inline-flex; align-items: center; gap: .5rem; margin: .35rem 1rem .35rem 0; }
+        .choice label { margin: 0; font-weight: 400; }
+        .hint, .status { color: rgba(255,255,255,.86); }
+        .status { min-height: 1.5rem; }
+        .alert { padding: .75rem; border-radius: .5rem; margin-bottom: .75rem; }
+        .alert-error, .alert-danger { background: rgba(220,53,69,.35); border: 1px solid #dc3545; }
+        .alert-success { background: rgba(40,167,69,.3); border: 1px solid #28a745; }
+        .horarios-grid { display: flex; flex-wrap: wrap; gap: .6rem; }
+        .horario-btn { border: 1px solid rgba(255,255,255,.55); border-radius: .5rem; padding: .65rem 1rem; background: rgba(255,255,255,.1); color: white; font: inherit; cursor: pointer; }
+        .horario-btn[aria-pressed="true"], .horario-btn:hover { background: #764ba2; }
+        .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
+        .btn { border: 0; border-radius: 2rem; padding: .8rem 1.35rem; color: #fff; background: linear-gradient(135deg,#667eea,#764ba2); font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; }
+        .btn-secondary { background: rgba(255,255,255,.15); }
+        :focus-visible { outline: .2rem solid #f0abfc; outline-offset: .15rem; }
+        @media (max-width: 40rem) { header { align-items: flex-start; flex-direction: column; padding: 1rem; } .card { padding: 1.25rem; } }
+    </style>
+</head>
+<body>
+    {% include 'agenda/accessibility_bar.html' %}
+    <header>
+        <span>💈 Agenda Aí — Agendamento Manual</span>
+        <a href="{% url 'home_barbeiro' %}"><i class="fas fa-arrow-left" aria-hidden="true"></i> Voltar ao painel</a>
+    </header>
+    <main>
+        <section class="card" aria-labelledby="manual-title">
+            <h1 id="manual-title">Adicionar Agendamento Manualmente</h1>
+            <p>Barbeiro responsável: <strong>{{ barbeiro.nome }}</strong>. O agendamento será criado com status pendente.</p>
+            {% if messages %}
+                {% for message in messages %}<div class="alert alert-{{ message.tags }}" role="alert">{{ message }}</div>{% endfor %}
+            {% endif %}
+            <form method="POST" action="{% url 'agendamento_manual' %}" id="manual-form">
+                {% csrf_token %}
+                <fieldset>
+                    <legend>Cliente</legend>
+                    <div class="choice">
+                        <input type="radio" id="cliente-existente" name="tipo_cliente" value="existente" {% if not form_data or form_data.tipo_cliente != 'novo' %}checked{% endif %}>
+                        <label for="cliente-existente">Cliente cadastrado</label>
+                    </div>
+                    <div class="choice">
+                        <input type="radio" id="cliente-novo" name="tipo_cliente" value="novo" {% if form_data.tipo_cliente == 'novo' %}checked{% endif %}>
+                        <label for="cliente-novo">Novo cliente</label>
+                    </div>
+                </fieldset>
+
+                <div id="existing-client-fields" class="field">
+                    <label for="usuario_id">Selecione o cliente</label>
+                    <select name="usuario_id" id="usuario_id">
+                        <option value="">Selecione um cliente</option>
+                        {% for cliente in clientes %}
+                            <option value="{{ cliente.id }}" {% if form_data.usuario_id == cliente.id|stringformat:'s' %}selected{% endif %}>{{ cliente.nome }} — {{ cliente.telefone }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if not clientes %}<p class="hint">Ainda não há clientes cadastrados. Selecione “Novo cliente”.</p>{% endif %}
+                </div>
+
+                <div id="new-client-fields" hidden>
+                    <div class="field">
+                        <label for="nome">Nome completo</label>
+                        <input type="text" id="nome" name="nome" maxlength="150" value="{{ form_data.nome|default:'' }}" autocomplete="name">
+                    </div>
+                    <div class="field">
+                        <label for="telefone">Telefone (DDD + número)</label>
+                        <input type="tel" id="telefone" name="telefone" inputmode="numeric" maxlength="15" value="{{ form_data.telefone|default:'' }}" autocomplete="tel">
+                    </div>
+                    <div class="field">
+                        <label for="data_nascimento">Data de nascimento</label>
+                        <input type="date" id="data_nascimento" name="data_nascimento" value="{{ form_data.data_nascimento|default:'' }}">
+                    </div>
+                    <p class="hint">A conta do novo cliente usará a senha temporária configurada pela aplicação.</p>
+                </div>
+
+                <div class="field">
+                    <label for="servico_id">Serviço</label>
+                    <select name="servico_id" id="servico_id" required>
+                        <option value="">Selecione um serviço</option>
+                        {% for servico in servicos %}
+                            <option value="{{ servico.id }}" {% if form_data.servico_id == servico.id|stringformat:'s' %}selected{% endif %}>{{ servico.nome }} — R$ {{ servico.valor }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="data">Data</label>
+                    <input type="date" id="data" name="data" min="{{ data_minima }}" max="{{ data_maxima }}" value="{{ form_data.data|default:data_minima }}" required>
+                </div>
+                <fieldset>
+                    <legend>Horário disponível</legend>
+                    <div id="horarios" class="horarios-grid" aria-describedby="horario-status"></div>
+                    <input type="hidden" name="horario" id="horario" value="{{ form_data.horario|default:'' }}">
+                    <p id="horario-status" class="status" role="status" aria-live="polite">Selecione uma data para consultar os horários.</p>
+                </fieldset>
+                <div class="actions">
+                    <a class="btn btn-secondary" href="{% url 'home_barbeiro' %}">Cancelar</a>
+                    <button class="btn" type="submit">Salvar agendamento pendente</button>
+                </div>
+            </form>
+        </section>
+    </main>
+    <script>
+        (() => {
+            const radios = document.querySelectorAll('input[name="tipo_cliente"]');
+            const existingFields = document.getElementById('existing-client-fields');
+            const newFields = document.getElementById('new-client-fields');
+            const existingSelect = document.getElementById('usuario_id');
+            const newInputs = newFields.querySelectorAll('input');
+            const date = document.getElementById('data');
+            const timeInput = document.getElementById('horario');
+            const slots = document.getElementById('horarios');
+            const status = document.getElementById('horario-status');
+            const barberId = '{{ barbeiro.id|escapejs }}';
+
+            function updateClientFields() {
+                const isNew = document.getElementById('cliente-novo').checked;
+                newFields.hidden = !isNew;
+                existingFields.hidden = isNew;
+                existingSelect.disabled = isNew;
+                existingSelect.required = !isNew;
+                newInputs.forEach((input) => {
+                    input.disabled = !isNew;
+                    input.required = isNew;
+                });
+            }
+            radios.forEach((radio) => radio.addEventListener('change', updateClientFields));
+            updateClientFields();
+
+            async function loadSlots() {
+                slots.replaceChildren();
+                timeInput.value = '';
+                if (!date.value) { status.textContent = 'Selecione uma data para consultar os horários.'; return; }
+                status.textContent = 'Buscando horários…';
+                try {
+                    const query = new URLSearchParams({ barbeiro_id: barberId, data: date.value });
+                    const response = await fetch(`{% url 'get_horarios' %}?${query.toString()}`);
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Não foi possível buscar horários.');
+                    if (!result.horarios.length) {
+                        status.textContent = result.folga ? 'O barbeiro não atende nesse dia.' : 'Não há horários disponíveis nessa data.';
+                        return;
+                    }
+                    result.horarios.forEach((hour) => {
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.className = 'horario-btn';
+                        button.textContent = hour;
+                        button.setAttribute('aria-pressed', 'false');
+                        button.addEventListener('click', () => {
+                            slots.querySelectorAll('button').forEach((item) => item.setAttribute('aria-pressed', 'false'));
+                            button.setAttribute('aria-pressed', 'true');
+                            timeInput.value = hour;
+                            status.textContent = `Horário selecionado: ${hour}.`;
+                        });
+                        slots.append(button);
+                    });
+                    status.textContent = 'Escolha um horário.';
+                } catch (error) {
+                    status.textContent = error.message;
+                }
+            }
+            date.addEventListener('change', loadSlots);
+            document.getElementById('manual-form').addEventListener('submit', (event) => {
+                if (!timeInput.value) {
+                    event.preventDefault();
+                    status.textContent = 'Selecione um horário antes de salvar.';
+                }
+            });
+            loadSlots();
+        })();
+    </script>
+</body>
+</html>

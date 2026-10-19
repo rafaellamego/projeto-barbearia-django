@@ -1,0 +1,359 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novo Agendamento - Agenda Aí</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        html { background-color: #0a0519; }
+        body {
+            background: linear-gradient(rgba(25,10,40,0.75), rgba(10,5,25,0.85)), url('{% static "fundo_barbearia.png" %}') no-repeat center center fixed;
+            background-size: cover;
+            font-family: Arial, sans-serif;
+            font-size: 1rem;
+            min-height: 100vh;
+            margin: 0;
+            color: white;
+            padding-bottom: 5rem;
+        }
+        .top-bar {
+            background: rgba(40,20,60,0.3);
+            backdrop-filter: blur(25px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+        .top-bar nav { display: flex; flex-wrap: wrap; gap: 1rem; }
+        .top-bar a { color: white; text-decoration: none; opacity: 0.85; }
+        .top-bar a:hover, .top-bar a:focus-visible { opacity: 1; text-decoration: underline; }
+        .container { max-width: 52rem; margin: 3rem auto; padding: 0 1.25rem; }
+        .card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.4);
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+        }
+        .card > h1 { text-align: center; font-size: 1.75rem; margin: 0 0 0.5rem; }
+        .intro { text-align: center; margin: 0 0 1.5rem; }
+        .progress { display: flex; list-style: none; padding: 0; margin: 0 0 2rem; gap: 0.5rem; }
+        .progress li { flex: 1; text-align: center; padding: 0.65rem 0.35rem; border-bottom: 0.2rem solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.7); font-size: 0.9rem; }
+        .progress li[aria-current="step"] { border-color: #c084fc; color: white; font-weight: 700; }
+        .step-panel[hidden] { display: none; }
+        .step-panel h2 { font-size: 1.25rem; margin-top: 0; }
+        .form-group { margin-bottom: 1.25rem; text-align: left; }
+        label, legend { display: block; margin-bottom: 0.5rem; font-weight: 700; }
+        select, input[type="date"] {
+            width: 100%; padding: 0.8rem; border-radius: 0.65rem;
+            border: 1px solid rgba(255,255,255,0.45); background: #241635;
+            color: white; font: inherit; box-sizing: border-box;
+        }
+        select option { color: #111; background: white; }
+        fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+        .hint { color: rgba(255,255,255,0.82); font-size: 0.95rem; }
+        .status-message { min-height: 1.5rem; margin: 0.75rem 0; }
+        .alert { padding: 0.75rem; border-radius: 0.6rem; margin-bottom: 1rem; }
+        .alert-error, .alert-danger { background: rgba(220,53,69,0.35); border: 1px solid #dc3545; }
+        .alert-success { background: rgba(40,167,69,0.3); border: 1px solid #28a745; }
+        .horarios-grid { display: flex; flex-wrap: wrap; gap: 0.65rem; margin-top: 0.75rem; }
+        .horario-btn {
+            background: rgba(255,255,255,0.1); color: white;
+            border: 1px solid rgba(255,255,255,0.45); padding: 0.7rem 1rem;
+            border-radius: 0.6rem; cursor: pointer; font: inherit;
+        }
+        .horario-btn:hover, .horario-btn:focus-visible { background: #667eea; }
+        .horario-btn[aria-pressed="true"] { background: #764ba2; border-color: white; }
+        .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; padding: 0.8rem 1.5rem; border-radius: 2rem;
+            text-decoration: none; font: inherit; font-weight: 700;
+            border: 0; cursor: pointer;
+        }
+        .btn-secondary { background: rgba(255,255,255,0.15); }
+        .btn:hover, .btn:focus-visible { outline: 0.2rem solid white; outline-offset: 0.15rem; }
+        .footer-social {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(10,5,20,0.95); border-top: 1px solid rgba(255,255,255,0.1);
+            padding: 0.85rem 0; display: flex; justify-content: center;
+            gap: 2rem; z-index: 1000;
+        }
+        .social-item { color: white; text-decoration: none; display: flex; align-items: center; gap: 0.5rem; }
+        :focus-visible { outline: 0.2rem solid #f0abfc; outline-offset: 0.15rem; }
+        @media (max-width: 42rem) {
+            .top-bar { align-items: flex-start; flex-direction: column; padding: 1rem; }
+            .container { margin: 1.25rem auto; padding: 0 0.75rem; }
+            .card { padding: 1.25rem; }
+            .progress { gap: 0.15rem; }
+            .progress li { font-size: 0.75rem; padding-inline: 0.1rem; }
+            .footer-social { gap: 0.75rem; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+    {% include 'agenda/accessibility_bar.html' %}
+
+    <header class="top-bar">
+        <span>💈 Agenda Aí - Novo Agendamento</span>
+        <nav aria-label="Navegação principal">
+            <a href="{% url 'home_cliente' %}"><i class="fas fa-home" aria-hidden="true"></i> Home</a>
+            <a href="{% url 'meus_agendamentos' %}"><i class="fas fa-calendar-alt" aria-hidden="true"></i> Meus Agendamentos</a>
+            <a href="{% url 'logout_cliente' %}"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Sair</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="card" aria-labelledby="booking-title">
+            <h1 id="booking-title">Novo Agendamento</h1>
+            <p class="intro">Escolha serviço, barbeiro, dia e horário.</p>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}" role="status">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <ol class="progress" aria-label="Etapas do agendamento">
+                <li id="progress-service" aria-current="step">1. Serviço</li>
+                <li id="progress-barber">2. Barbeiro</li>
+                <li id="progress-date">3. Dia</li>
+                <li id="progress-time">4. Horário</li>
+            </ol>
+
+            <form method="POST" action="{% url 'salvar_agendamento' %}" id="form-agendamento">
+                {% csrf_token %}
+                <section class="step-panel" id="step-service" aria-labelledby="service-title">
+                    <h2 id="service-title" tabindex="-1">Etapa 1 — escolha o serviço</h2>
+                    <div class="form-group">
+                        <label for="servico">Serviço</label>
+                        <select name="servico_id" id="servico" required>
+                            <option value="">Selecione um serviço</option>
+                            {% for servico in servicos %}
+                                <option value="{{ servico.id }}">{{ servico.nome }} — R$ {{ servico.valor }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="actions"><button type="button" class="btn" id="next-service">Continuar para barbeiros</button></div>
+                </section>
+
+                <section class="step-panel" id="step-barber" aria-labelledby="barber-title" hidden>
+                    <h2 id="barber-title" tabindex="-1">Etapa 2 — escolha o barbeiro</h2>
+                    <p class="hint" id="barber-hint">A lista começa considerando hoje. Se a data escolhida não fizer parte da escala do barbeiro, você poderá selecionar outro.</p>
+                    <div class="form-group">
+                        <label for="barbeiro">Barbeiro</label>
+                        <select name="barbeiro_id" id="barbeiro" required disabled>
+                            <option value="">Carregando barbeiros…</option>
+                        </select>
+                    </div>
+                    <p class="status-message" id="barber-status" role="status" aria-live="polite"></p>
+                    <div class="actions">
+                        <button type="button" class="btn btn-secondary" data-back="service">Voltar</button>
+                        <button type="button" class="btn" id="next-barber">Continuar para o dia</button>
+                    </div>
+                </section>
+
+                <section class="step-panel" id="step-date" aria-labelledby="date-title" hidden>
+                    <h2 id="date-title" tabindex="-1">Etapa 3 — escolha o dia</h2>
+                    <div class="form-group">
+                        <label for="data">Data do atendimento</label>
+                        <input type="date" name="data" id="data" required>
+                    </div>
+                    <p class="status-message" id="date-status" role="status" aria-live="polite"></p>
+                    <div class="actions">
+                        <button type="button" class="btn btn-secondary" data-back="barber">Voltar</button>
+                        <button type="button" class="btn" id="next-date">Ver horários</button>
+                    </div>
+                </section>
+
+                <section class="step-panel" id="step-time" aria-labelledby="time-title" hidden>
+                    <h2 id="time-title" tabindex="-1">Etapa 4 — escolha o horário</h2>
+                    <p id="booking-summary" class="hint"></p>
+                    <fieldset>
+                        <legend>Horários disponíveis</legend>
+                        <div id="horarios" class="horarios-grid" aria-describedby="time-status"></div>
+                    </fieldset>
+                    <input type="hidden" name="horario" id="horario_selecionado">
+                    <p class="status-message" id="time-status" role="status" aria-live="polite"></p>
+                    <div class="actions">
+                        <button type="button" class="btn btn-secondary" data-back="date">Voltar</button>
+                        <button type="submit" class="btn">Confirmar agendamento</button>
+                    </div>
+                </section>
+            </form>
+        </section>
+    </main>
+
+    <footer class="footer-social" aria-label="Contato">
+        <a href="#" class="social-item"><i class="fab fa-instagram" aria-hidden="true"></i> @AgendaAi</a>
+        <a href="#" class="social-item"><i class="fab fa-whatsapp" aria-hidden="true"></i> (11) 99999-9999</a>
+    </footer>
+
+    <script>
+        (() => {
+            const $ = (selector) => document.querySelector(selector);
+            const form = $('#form-agendamento');
+            const service = $('#servico');
+            const barber = $('#barbeiro');
+            const date = $('#data');
+            const selectedTime = $('#horario_selecionado');
+            const panels = ['service', 'barber', 'date', 'time'];
+            let currentReferenceDate = '';
+
+            function localDateString(value = new Date()) {
+                const year = value.getFullYear();
+                const month = String(value.getMonth() + 1).padStart(2, '0');
+                const day = String(value.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            function showStep(name) {
+                panels.forEach((step) => {
+                    $(`#step-${step}`).hidden = step !== name;
+                    const progress = $(`#progress-${step}`);
+                    if (step === name) progress.setAttribute('aria-current', 'step');
+                    else progress.removeAttribute('aria-current');
+                });
+                $(`#step-${name} h2`).focus?.();
+            }
+
+            async function loadBarbers(day) {
+                barber.disabled = true;
+                barber.innerHTML = '<option value="">Carregando barbeiros…</option>';
+                const response = await fetch(`{% url 'get_barbeiros' %}?data=${encodeURIComponent(day)}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Não foi possível carregar os barbeiros.');
+                barber.replaceChildren(new Option('Selecione um barbeiro', ''));
+                result.barbeiros.forEach((item) => barber.add(new Option(item.nome, item.id)));
+                barber.disabled = result.barbeiros.length === 0;
+                currentReferenceDate = day;
+                $('#barber-hint').textContent = `Barbeiros que atendem em ${new Date(`${day}T12:00:00`).toLocaleDateString('pt-BR')}.`;
+                $('#barber-status').textContent = result.barbeiros.length ? '' : 'Nenhum barbeiro atende nessa data. Escolha outra data.';
+                return result.barbeiros;
+            }
+
+            function clearTimes() {
+                $('#horarios').replaceChildren();
+                selectedTime.value = '';
+            }
+
+            async function loadTimes() {
+                clearTimes();
+                $('#time-status').textContent = 'Buscando horários disponíveis…';
+                const query = new URLSearchParams({ barbeiro_id: barber.value, data: date.value });
+                const response = await fetch(`{% url 'get_horarios' %}?${query.toString()}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Não foi possível buscar os horários.');
+                if (!result.horarios.length) {
+                    $('#time-status').textContent = result.folga ? 'O barbeiro não atende nesse dia.' : 'Não há horários disponíveis para essa data.';
+                    return false;
+                }
+                result.horarios.forEach((hour) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'horario-btn';
+                    button.textContent = hour;
+                    button.setAttribute('aria-pressed', 'false');
+                    button.addEventListener('click', () => {
+                        document.querySelectorAll('.horario-btn').forEach((item) => item.setAttribute('aria-pressed', 'false'));
+                        button.setAttribute('aria-pressed', 'true');
+                        selectedTime.value = hour;
+                        $('#time-status').textContent = `Horário selecionado: ${hour}.`;
+                    });
+                    $('#horarios').append(button);
+                });
+                $('#time-status').textContent = 'Selecione um horário.';
+                return true;
+            }
+
+            $('#data').min = localDateString();
+            const maximum = new Date();
+            maximum.setDate(maximum.getDate() + 30);
+            date.max = localDateString(maximum);
+            date.value = localDateString();
+
+            $('#next-service').addEventListener('click', async () => {
+                if (!service.value) { service.reportValidity(); return; }
+                $('#barber-status').textContent = 'Carregando barbeiros…';
+                try {
+                    const available = await loadBarbers(localDateString());
+                    if (!available.length) { showStep('barber'); return; }
+                    showStep('barber');
+                    barber.focus();
+                } catch (error) {
+                    $('#barber-status').textContent = error.message;
+                    showStep('barber');
+                }
+            });
+
+            $('#next-barber').addEventListener('click', () => {
+                if (!barber.value && !barber.disabled) { barber.reportValidity(); return; }
+                showStep('date');
+                date.focus();
+            });
+
+            $('#next-date').addEventListener('click', async () => {
+                if (!date.value) { date.reportValidity(); return; }
+                if (date.value < date.min || date.value > date.max) {
+                    $('#date-status').textContent = 'Escolha uma data entre hoje e os próximos 30 dias.';
+                    return;
+                }
+                $('#date-status').textContent = 'Verificando a escala do barbeiro…';
+                try {
+                    const chosenBarberId = barber.value;
+                    const available = await loadBarbers(date.value);
+                    if (!chosenBarberId) {
+                        if (available.length) {
+                            $('#date-status').textContent = 'Selecione um barbeiro que atenda na data escolhida.';
+                            showStep('barber');
+                            barber.focus();
+                        } else {
+                            $('#date-status').textContent = 'Nenhum barbeiro atende nesse dia. Escolha outra data.';
+                        }
+                        return;
+                    }
+                    if (!available.some((item) => String(item.id) === chosenBarberId)) {
+                        barber.value = '';
+                        clearTimes();
+                        $('#date-status').textContent = 'O barbeiro selecionado não atende nesse dia. Escolha um dos barbeiros disponíveis para a data.';
+                        showStep('barber');
+                        barber.focus();
+                        return;
+                    }
+                    barber.value = chosenBarberId;
+                    $('#date-status').textContent = '';
+                    const selectedService = service.options[service.selectedIndex].text;
+                    const selectedBarber = barber.options[barber.selectedIndex].text;
+                    $('#booking-summary').textContent = `${selectedService} · ${selectedBarber} · ${new Date(`${date.value}T12:00:00`).toLocaleDateString('pt-BR')}`;
+                    if (await loadTimes()) {
+                        showStep('time');
+                        $('#horarios button')?.focus();
+                    } else {
+                        showStep('time');
+                    }
+                } catch (error) {
+                    $('#date-status').textContent = error.message;
+                }
+            });
+
+            document.querySelectorAll('[data-back]').forEach((button) => {
+                button.addEventListener('click', () => showStep(button.dataset.back));
+            });
+
+            date.addEventListener('change', clearTimes);
+            barber.addEventListener('change', clearTimes);
+            form.addEventListener('submit', (event) => {
+                if (!service.value || !barber.value || !date.value || !selectedTime.value) {
+                    event.preventDefault();
+                    $('#time-status').textContent = 'Selecione serviço, barbeiro, dia e horário antes de confirmar.';
+                    showStep(!service.value ? 'service' : !barber.value ? 'barber' : !date.value ? 'date' : 'time');
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{% load static %}
+<style>
+    .visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
+</style>
+<div class="accessibility-controls" role="group" aria-label="Controles de tamanho do texto" style="position: fixed; bottom: 10px; right: 20px; z-index: 9999; background: #fff; padding: 6px 12px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 8px;">
+    <img src="{% static 'acessibility-icon.png' %}" alt="" aria-hidden="true" style="width: 26px; height: 26px; object-fit: contain; margin-right: 8px;">
+    <button type="button" id="btn-decrease-font" aria-label="Diminuir o tamanho do texto" style="cursor: pointer; padding: 4px 10px; font-size: 0.9rem; font-weight: bold; border: 1px solid #ccc; background: #f8f9fa; border-radius: 4px;">A−</button>
+    <button type="button" id="btn-reset-font" aria-label="Restaurar o tamanho normal do texto" style="cursor: pointer; padding: 4px 10px; font-size: 0.9rem; font-weight: bold; border: 1px solid #ccc; background: #f8f9fa; border-radius: 4px;">A</button>
+    <button type="button" id="btn-increase-font" aria-label="Aumentar o tamanho do texto" style="cursor: pointer; padding: 4px 10px; font-size: 0.9rem; font-weight: bold; border: 1px solid #ccc; background: #f8f9fa; border-radius: 4px;">A+</button>
+    <span id="font-size-status" class="visually-hidden" aria-live="polite"></span>
+</div>
+<script src="{% static 'js/accessibility.js' %}"></script>
