@@ -79,6 +79,61 @@ Acesse http://127.0.0.1:8000.
 
 Ao trocar de branch, apague o `db.sqlite3` e rode de novo o `migrate` e o `loaddata`, porque cada branch pode ter migrações diferentes.
 
+## Execução dos Testes Automatizados
+
+Instruções para isolamento do ambiente, instalação de dependências e execução da suíte de testes unitários do módulo `agenda`.
+
+---
+
+### 1. Navegue até a pasta do projeto
+Acesse o diretório raiz da aplicação Django onde o script `manage.py` está localizado:
+
+```bash
+cd "projeto-barbearia-django"
+
+```
+
+### 2. Ative o ambiente virtual
+
+Inicialize o ambiente virtual isolado para carregar o executável do Python e o gerenciador de pacotes da aplicação:
+
+```bash
+venv\Scripts\activate
+
+```
+
+### 3. Instale as dependências
+
+Instale o módulo de gerenciamento de variáveis de ambiente (`python-dotenv`) e as demais dependências do projeto mapeadas:
+
+```bash
+pip install python-dotenv -r requirements.txt
+
+```
+
+### 4. Execute a suíte de testes
+
+Rode a suíte de testes referente à aplicação `agenda`, utilizando a flag `-v 2` para obter a saída detalhada (*verbose*) por *test case*:
+
+```bash
+python manage.py test agenda -v 2
+
+```
+
+---
+
+### 5. Saída esperada
+
+Após a criação e teardown do banco de dados temporário de testes, o *test runner* deve retornar a validação com status `OK`:
+
+```bash
+Ran 30 tests in 1.759s
+
+OK
+
+```
+
+
 ## 🤝 Como a equipe trabalha
 
 - O **GitHub é a única fonte do código**. Só o responsável pelo servidor atualiza a VM da Oracle, a partir do branch `integracao-oracle`.
