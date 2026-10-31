@@ -226,7 +226,7 @@
                     <select name="servico_id" id="servico" required>
                         <option value="">-- Selecione --</option>
                         {% for servico in servicos %}
-                        <option value="{{ servico.id }}">{{ servico.nome }} - R$ {{ servico.valor }}</option>
+                        <option value="{{ servico.id }}">{{ servico.nome }} - R$ {{ servico.valor|floatformat:2 }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -270,13 +270,15 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $('#servico, #barbeiro, #data').change(function() {
+            var servico = $('#servico').val();
             var barbeiro = $('#barbeiro').val();
             var data = $('#data').val();
             
             if (barbeiro && data) {
                 $.get('/get-horarios/', {
                     'barbeiro_id': barbeiro,
-                    'data': data
+                    'data': data,
+                    'servico_id': servico  // duração do serviço define o intervalo entre os slots
                 }, function(response) {
                     var container = $('#horarios');
                     container.empty();

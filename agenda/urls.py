@@ -15,6 +15,7 @@ urlpatterns = [
     path('agendamento/', views.agendamento, name='agendamento'),
     path('salvar-agendamento/', views.salvar_agendamento, name='salvar_agendamento'),
     path('meus-agendamentos/', views.meus_agendamentos, name='meus_agendamentos'),
+    path('get-barbeiros/', views.get_barbeiros_disponiveis, name='get_barbeiros'),
     path('get-horarios/', views.get_horarios_disponiveis, name='get_horarios'),
     path('cancelar-agendamento/<int:agendamento_id>/', views.cancelar_agendamento, name='cancelar_agendamento'),
 

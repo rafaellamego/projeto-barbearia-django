@@ -114,76 +114,107 @@ def cancelar_agendamento(request, agendamento_id):
     return redirect('meus_agendamentos')
 
 
+# ==================== BUSCAR BARBEIROS DISPONÍVEIS (AJAX) ====================
+def get_barbeiros_disponiveis(request):
+    """Retorna lista de barbeiros que atendem na data informada, considerando a EscalaBarbeiro."""
+    if 'usuario_id' not in request.session:
+        return JsonResponse({'error': 'Sessão expirada.'}, status=401)
+
+    data_str = request.GET.get('data', '')
+    try:
+        data = datetime.datetime.strptime(data_str, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({'error': 'Data inválida.'}, status=400)
+
+    # Monta um dicionário {barbeiro_id: ativo} para o dia da semana da data
+    escalas = dict(
+        EscalaBarbeiro.objects.filter(dia_semana=data.weekday())
+        .values_list('barbeiro_id', 'ativo')
+    )
+
+    barbeiros = []
+    for barbeiro in Barbeiro.objects.all().order_by('nome'):
+        # Se há escala cadastrada, respeita o campo ativo; se não há, considera
+        # ativo por padrão exceto no domingo (weekday 6)
+        ativo = escalas.get(barbeiro.id, data.weekday() != 6)
+        if ativo:
+            barbeiros.append({'id': barbeiro.id, 'nome': barbeiro.nome})
+
+    return JsonResponse({'barbeiros': barbeiros, 'data': data.isoformat()})
+
+
 # ==================== BUSCAR HORÁRIOS (AJAX) ====================
 def get_horarios_disponiveis(request):
     barbeiro_id = request.GET.get('barbeiro_id')
     data_str = request.GET.get('data')
-    
+    servico_id = request.GET.get('servico_id')  # usado para calcular o intervalo entre slots
+
     if not barbeiro_id or not data_str:
         return JsonResponse({'error': 'Parâmetros faltando'}, status=400)
-    
+
     try:
-        # Converte a string de data para um objeto datetime.date
         data_selecionada = datetime.datetime.strptime(data_str, '%Y-%m-%d').date()
     except ValueError:
         return JsonResponse({'error': 'Formato de data inválido'}, status=400)
 
-    # 1. PEGAR A ESCALA DO BARBEIRO PARA O DIA DA SEMANA SELECIONADO
+    # 1. DURAÇÃO DO SERVIÇO — define o intervalo entre os slots
+    # Se não vier servico_id ou o serviço não existir, usa 30 min como padrão
+    intervalo_minutos = 30
+    if servico_id:
+        try:
+            servico = Servico.objects.get(pk=servico_id)
+            intervalo_minutos = servico.duracao_minutos
+        except Servico.DoesNotExist:
+            pass  # mantém 30 min
+
+    # 2. ESCALA DO BARBEIRO PARA O DIA DA SEMANA
     dia_semana = data_selecionada.weekday()  # 0=Segunda, 6=Domingo
     escala = EscalaBarbeiro.objects.filter(barbeiro_id=barbeiro_id, dia_semana=dia_semana).first()
 
     if escala:
-        # Barbeiro já configurou a escala: respeita a folga e os horários dele
         if not escala.ativo:
             return JsonResponse({'horarios': [], 'folga': True})
-        escala_inicio = escala.horario_inicio
-        escala_fim = escala.horario_fim
+        escala_inicio = escala.horario_inicio or datetime.time(8, 0)
+        escala_fim = escala.horario_fim or datetime.time(18, 0)
     else:
-        # Escala ainda não configurada: usa o padrão (segunda a sábado, 08:00 às 18:00)
-        if dia_semana == 6:  # domingo
+        # Sem escala cadastrada: padrão segunda a sábado, folga no domingo
+        if dia_semana == 6:
             return JsonResponse({'horarios': [], 'folga': True})
         escala_inicio = datetime.time(8, 0)
         escala_fim = datetime.time(18, 0)
 
-    # 2. PEGAR HORÁRIOS QUE JÁ ESTÃO RESERVADOS NO BANCO
-    horarios_reservados = Agendamento.objects.filter(
-        barbeiro_id=barbeiro_id,
-        data=data_selecionada
-    ).values_list('hora', flat=True)
-    
-    horarios_reservados_str = [h.strftime('%H:%M') for h in horarios_reservados]
-    
-    # 3. CONVERTER HORA ATUAL SE FOR O DIA DE HOJE (Para evitar agendar no passado)
+    # 3. HORÁRIOS JÁ RESERVADOS NO BANCO
+    horarios_reservados = set(
+        Agendamento.objects.filter(
+            barbeiro_id=barbeiro_id,
+            data=data_selecionada,
+        ).values_list('hora', flat=True)
+    )
+    horarios_reservados_str = {h.strftime('%H:%M') for h in horarios_reservados}
+
+    # 4. HORA ATUAL (para bloquear horários passados no dia de hoje)
     agora = timezone.localtime(timezone.now())
     hoje = agora.date()
-    hora_atual_relogio = agora.time()
+    hora_atual = agora.time()
 
     horarios_disponiveis = []
-    
-    # Define o loop baseado na escala do barbeiro (se não houver hora definida, usa padrão)
-    hora_loop = datetime.datetime.combine(data_selecionada, escala_inicio or datetime.time(9, 0))
-    hora_limite = datetime.datetime.combine(data_selecionada, escala_fim or datetime.time(19, 0))
-    
-    # 4. LOOP DE FILTRAGEM DOS HORÁRIOS
+    hora_loop = datetime.datetime.combine(data_selecionada, escala_inicio)
+    hora_limite = datetime.datetime.combine(data_selecionada, escala_fim)
+
+    # 5. GERA OS SLOTS COM INTERVALO BASEADO NA DURAÇÃO DO SERVIÇO
     while hora_loop <= hora_limite:
-        slot_time = hora_loop.time()
-        horario_str = slot_time.strftime('%H:%M')
+        slot = hora_loop.time()
+        horario_str = slot.strftime('%H:%M')
 
-        # Regra A: O horário NÃO pode estar reservado
         nao_reservado = horario_str not in horarios_reservados_str
-        
-        # Regra B: Se for HOJE, o horário do slot deve ser maior que o horário atual do relógio
-        no_futuro = True
-        if data_selecionada == hoje:
-            no_futuro = slot_time > hora_atual_relogio
+        no_futuro = slot > hora_atual if data_selecionada == hoje else True
 
-        # Se passar em todas as validações, exibe na tela
         if nao_reservado and no_futuro:
             horarios_disponiveis.append(horario_str)
-            
-        hora_loop += datetime.timedelta(minutes=30)
-    
-    return JsonResponse({'horarios': horarios_disponiveis})
+
+        hora_loop += datetime.timedelta(minutes=intervalo_minutos)
+
+    return JsonResponse({'horarios': horarios_disponiveis, 'folga': False})
 
 
 
@@ -221,27 +252,55 @@ def salvar_agendamento(request):
         usuario_id = request.session.get('usuario_id')
         if not usuario_id:
             return redirect('login')
-            
+
         barbeiro_id = request.POST.get('barbeiro_id')
         servico_id = request.POST.get('servico_id')
-        data = request.POST.get('data')
+        data_str = request.POST.get('data')
         hora = request.POST.get('horario')
-        
-        if Agendamento.objects.filter(barbeiro_id=barbeiro_id, data=data, hora=hora).exists():
+
+        # Valida se o barbeiro existe
+        try:
+            barbeiro = Barbeiro.objects.get(pk=barbeiro_id)
+        except (Barbeiro.DoesNotExist, TypeError, ValueError):
+            messages.error(request, 'Barbeiro inválido.')
+            return redirect('agendamento')
+
+        # Valida se a data é válida
+        try:
+            data = datetime.datetime.strptime(data_str, '%Y-%m-%d').date()
+        except (TypeError, ValueError):
+            messages.error(request, 'Data inválida.')
+            return redirect('agendamento')
+
+        # Valida se o barbeiro atende neste dia (escala)
+        dia_semana = data.weekday()
+        escala = EscalaBarbeiro.objects.filter(
+            barbeiro=barbeiro, dia_semana=dia_semana
+        ).first()
+        if escala and not escala.ativo:
+            messages.error(request, f'{barbeiro.nome} não atende neste dia.')
+            return redirect('agendamento')
+        # Sem escala cadastrada: domingo é folga padrão
+        if not escala and dia_semana == 6:
+            messages.error(request, f'{barbeiro.nome} não atende aos domingos.')
+            return redirect('agendamento')
+
+        # Valida horário duplicado
+        if Agendamento.objects.filter(barbeiro=barbeiro, data=data, hora=hora).exists():
             messages.error(request, 'Este horário já foi reservado!')
             return redirect('agendamento')
-        
+
         Agendamento.objects.create(
             usuario_id=usuario_id,
-            barbeiro_id=barbeiro_id,
+            barbeiro=barbeiro,
             servico_id=servico_id,
             data=data,
-            hora=hora
+            hora=hora,
         )
-        
+
         messages.success(request, '✅ Agendamento realizado com sucesso!')
         return redirect('meus_agendamentos')
-    
+
     return redirect('agendamento')
 
 
