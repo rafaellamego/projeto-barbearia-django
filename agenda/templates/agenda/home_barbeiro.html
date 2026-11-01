@@ -202,7 +202,6 @@
 
         /* ---- Layout principal ---- */
         main { flex: 1; margin-left: 260px; padding: 40px; display: flex; flex-direction: column; align-items: center; }
-        .top-header { width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
 
         /* ---- Welcome block ---- */
         .welcome-block {
@@ -311,13 +310,159 @@
         .card-servico { font-size: .8rem; opacity: .6; }
         .sortable-ghost { opacity: .3; transform: scale(.92); }
 
+        /* ---- Top-header 3 colunas ---- */
+        .top-header {
+            width: 100%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 20px;
+            align-items: start;
+            margin-bottom: 40px;
+        }
+
         /* ---- Mini-calendário ---- */
-        .calendar-glass { background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); border-radius: 15px; padding: 15px; width: 220px; }
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: .9rem; }
-        .calendar-header button { background: none; border: none; color: white; cursor: pointer; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 5px; text-align: center; font-size: .8rem; }
-        .calendar-grid div { padding: 5px 0; }
-        .today { background: var(--purple-bright); border-radius: 5px; font-weight: bold; }
+        .calendar-glass {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-glass);
+            border-radius: 18px;
+            padding: 18px 20px;
+            width: 300px;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .calendar-header button {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid var(--border-glass);
+            color: white;
+            cursor: pointer;
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            transition: background .2s;
+        }
+        .calendar-header button:hover { background: var(--purple-glass); }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7,1fr);
+            gap: 4px;
+            text-align: center;
+            font-size: .85rem;
+        }
+        .calendar-grid .cal-header-day {
+            font-size: .7rem;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.35);
+            padding: 4px 0 8px;
+        }
+        .calendar-grid .cal-day {
+            padding: 7px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background .15s, color .15s;
+            line-height: 1;
+        }
+        .calendar-grid .cal-day:hover {
+            background: var(--purple-glass);
+            color: #e0b0ff;
+        }
+        .calendar-grid .cal-day.today {
+            background: var(--purple-bright);
+            color: white;
+            font-weight: 700;
+            box-shadow: 0 2px 10px rgba(168,85,247,0.5);
+        }
+        .calendar-grid .cal-day.tem-ag {
+            position: relative;
+        }
+        .calendar-grid .cal-day.tem-ag::after {
+            content: '';
+            display: block;
+            width: 4px; height: 4px;
+            background: var(--purple-bright);
+            border-radius: 50%;
+            margin: 3px auto 0;
+        }
+        .calendar-grid .cal-day.today.tem-ag::after {
+            background: white;
+        }
+
+        /* ---- Mini seção agendamentos de hoje ---- */
+        .hoje-glass {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-glass);
+            border-radius: 18px;
+            padding: 18px 20px;
+            width: 240px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+        }
+        .hoje-titulo {
+            font-size: .75rem;
+            font-weight: 700;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--purple-bright);
+            margin: 0 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+        .hoje-list {
+            list-style: none;
+            margin: 0; padding: 0;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .hoje-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            background: rgba(168,85,247,0.1);
+            border: 1px solid rgba(168,85,247,0.2);
+            border-radius: 10px;
+            padding: 8px 10px;
+            cursor: pointer;
+            transition: background .15s;
+        }
+        .hoje-item:hover { background: rgba(168,85,247,0.22); }
+        .hoje-item-hora {
+            font-size: .75rem;
+            color: var(--purple-bright);
+            font-weight: 700;
+        }
+        .hoje-item-nome {
+            font-size: .85rem;
+            font-weight: 600;
+        }
+        .hoje-item-servico {
+            font-size: .75rem;
+            opacity: .55;
+        }
+        .hoje-vazio {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            opacity: .45;
+            font-size: .82rem;
+            text-align: center;
+        }
+        .hoje-vazio i { font-size: 1.6rem; color: var(--purple-bright); opacity: .6; }
 
         /* ---- Zona de exclusão ---- */
         #delete-zone { border: 1px dashed rgba(255,80,80,0.4); margin-top: 20px; }
@@ -403,7 +548,94 @@
             .menu-item { justify-content: center; padding: 12px; }
             .menu-item .mi-icon { margin-right: 0; }
             main { margin-left: 80px; }
+            .top-header { grid-template-columns: 1fr; }
+            .calendar-glass, .hoje-glass { width: 100%; box-sizing: border-box; }
         }
+
+        /* ---- Pop-up calendário (dia) ---- */
+        .modal-overlay-cal {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(4px);
+            z-index: 600;
+            display: flex; align-items: center; justify-content: center;
+            padding: 1rem;
+        }
+        .modal-overlay-cal[hidden] { display: none; }
+
+        .modal-cal {
+            background: rgba(20,10,35,0.97);
+            border: 1px solid rgba(168,85,247,0.4);
+            border-radius: 1.25rem;
+            padding: 1.75rem;
+            width: 100%;
+            max-width: 420px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        .modal-cal h2 {
+            margin: 0 0 1.25rem;
+            font-size: 1.1rem;
+            display: flex; align-items: center; gap: .6rem;
+        }
+        .modal-cal h2 i { color: var(--purple-bright); }
+
+        .modal-cal-close {
+            position: absolute; top: 1rem; right: 1rem;
+            background: rgba(255,255,255,0.1); border: none; color: white;
+            width: 2rem; height: 2rem; border-radius: 50%;
+            cursor: pointer; font-size: 1rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .modal-cal-close:hover { background: rgba(255,255,255,0.2); }
+
+        .modal-cal-list {
+            list-style: none; margin: 0; padding: 0;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .modal-cal-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(168,85,247,0.1);
+            border: 1px solid rgba(168,85,247,0.25);
+            border-radius: 12px;
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: background .15s, transform .12s;
+        }
+        .modal-cal-item:hover { background: rgba(168,85,247,0.22); transform: translateX(2px); }
+        .modal-cal-hora {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--purple-bright);
+            min-width: 44px;
+        }
+        .modal-cal-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .modal-cal-nome { font-size: .92rem; font-weight: 600; }
+        .modal-cal-servico { font-size: .78rem; opacity: .55; }
+        .modal-cal-status {
+            font-size: .7rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+        .status-pendente   { background: rgba(239,68,68,0.2);  color: #fca5a5; }
+        .status-confirmado { background: rgba(59,130,246,0.2); color: #93c5fd; }
+        .status-execucao   { background: rgba(234,179,8,0.2);  color: #fde047; }
+        .status-concluido  { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+        .status-cancelado  { background: rgba(107,114,128,0.2);color: #d1d5db; }
+
+        .modal-cal-vazio {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 12px; padding: 2rem 1rem;
+            opacity: .5; text-align: center;
+        }
+        .modal-cal-vazio i { font-size: 2.5rem; color: var(--purple-bright); }
+        .modal-cal-vazio p { margin: 0; font-size: .9rem; }
     </style>
 </head>
 <body>
@@ -453,6 +685,7 @@
 
 <main>
     <div class="top-header">
+        <!-- Coluna 1: boas-vindas -->
         <div class="welcome-block">
             <span class="welcome-greeting"><i class="fas fa-hand-sparkles"></i>Bem-vindo de volta</span>
             <p class="welcome-name">Olá, <strong>{{ barbeiro.nome }}</strong></p>
@@ -462,6 +695,8 @@
                 <span>Hoje é: <span id="data-atual"></span></span>
             </div>
         </div>
+
+        <!-- Coluna 2: calendário -->
         <div class="calendar-glass">
             <div class="calendar-header">
                 <button id="prevMonth" aria-label="Mês anterior"><i class="fas fa-caret-left"></i></button>
@@ -469,9 +704,25 @@
                 <button id="nextMonth" aria-label="Próximo mês"><i class="fas fa-caret-right"></i></button>
             </div>
             <div class="calendar-grid" id="calendarGrid">
-                <div style="opacity:.5">D</div><div style="opacity:.5">S</div><div style="opacity:.5">T</div>
-                <div style="opacity:.5">Q</div><div style="opacity:.5">Q</div><div style="opacity:.5">S</div><div style="opacity:.5">S</div>
+                <div class="cal-header-day">D</div>
+                <div class="cal-header-day">S</div>
+                <div class="cal-header-day">T</div>
+                <div class="cal-header-day">Q</div>
+                <div class="cal-header-day">Q</div>
+                <div class="cal-header-day">S</div>
+                <div class="cal-header-day">S</div>
             </div>
+        </div>
+
+        <!-- Coluna 3: agendamentos de hoje -->
+        <div class="hoje-glass">
+            <p class="hoje-titulo"><i class="fas fa-clock"></i> Hoje</p>
+            <ul class="hoje-list" id="hoje-list">
+                <li class="hoje-vazio">
+                    <i class="fas fa-calendar-times"></i>
+                    <span>Carregando…</span>
+                </li>
+            </ul>
         </div>
     </div>
 
@@ -601,6 +852,15 @@
 
         <!-- Formulário oculto para exclusão -->
         <form id="form-excluir" method="POST" style="display:none;"></form>
+    </div>
+</div>
+
+<!-- ===================== MODAL DO DIA (CALENDÁRIO) ===================== -->
+<div class="modal-overlay-cal" id="modal-overlay-cal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-cal-titulo">
+    <div class="modal-cal">
+        <button class="modal-cal-close" id="modal-cal-fechar" aria-label="Fechar"><i class="fas fa-times"></i></button>
+        <h2 id="modal-cal-titulo"><i class="fas fa-calendar-day"></i> <span id="modal-cal-data-label"></span></h2>
+        <ul class="modal-cal-list" id="modal-cal-list"></ul>
     </div>
 </div>
 
@@ -799,36 +1059,161 @@ document.getElementById('btn-excluir-modal').addEventListener('click', () => {
 });
 
 // ============================================================
-// 6. Calendário dinâmico
+// 6. CALENDÁRIO DINÂMICO + POP-UP DO DIA
 // ============================================================
-const monthDisplay = document.getElementById('monthDisplay');
-const calendarGrid = document.getElementById('calendarGrid');
-let currentDate = new Date();
-const hoje = new Date();
+const AGENDAMENTOS_DATA_URL = '{% url "agendamentos_por_data" %}';
 
+const monthDisplay   = document.getElementById('monthDisplay');
+const calendarGrid   = document.getElementById('calendarGrid');
+const overlayCal     = document.getElementById('modal-overlay-cal');
+const modalCalList   = document.getElementById('modal-cal-list');
+const modalCalLabel  = document.getElementById('modal-cal-data-label');
+const hojeListEl     = document.getElementById('hoje-list');
+
+let currentDate = new Date();
+const hojeObj   = new Date();
+
+// Formata Date → 'YYYY-MM-DD' (local, sem UTC shift)
+function toISOLocal(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// Mapeia status → classe CSS
+const statusClassMap = {
+    pendente:   'status-pendente',
+    confirmado: 'status-confirmado',
+    execucao:   'status-execucao',
+    concluido:  'status-concluido',
+    cancelado:  'status-cancelado',
+};
+
+// Renderiza os itens da lista (mini seção OU pop-up)
+function renderAgList(container, agendamentos, fecharCb) {
+    container.innerHTML = '';
+    if (!agendamentos.length) {
+        container.innerHTML = `
+            <li class="modal-cal-vazio">
+                <i class="fas fa-calendar-times"></i>
+                <p>Nenhum agendamento para esse dia</p>
+            </li>`;
+        return;
+    }
+    agendamentos.forEach(ag => {
+        const li = document.createElement('li');
+        li.className = 'modal-cal-item';
+        li.innerHTML = `
+            <span class="modal-cal-hora">${ag.hora}</span>
+            <span class="modal-cal-info">
+                <span class="modal-cal-nome">${ag.nome_cliente}</span>
+                <span class="modal-cal-servico">${ag.servico_nome}</span>
+            </span>
+            <span class="modal-cal-status ${statusClassMap[ag.status] || ''}">${ag.status_label}</span>`;
+        li.addEventListener('click', () => {
+            if (fecharCb) fecharCb();
+            abrirModal(ag.id);
+        });
+        container.appendChild(li);
+    });
+}
+
+// Renderiza o calendário
 function renderCalendar() {
-    const year  = currentDate.getFullYear();
-    const month = currentDate.getMonth();
+    const year     = currentDate.getFullYear();
+    const month    = currentDate.getMonth();
     const firstDay = new Date(year, month, 1).getDay();
-    const lastDate = new Date(year, month+1, 0).getDate();
-    const months = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+    const lastDate = new Date(year, month + 1, 0).getDate();
+    const months   = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+
     monthDisplay.textContent = `${months[month]} ${year}`;
 
-    const headers = Array.from(calendarGrid.children).slice(0,7);
+    // Preserva cabeçalhos
+    const headers = Array.from(calendarGrid.querySelectorAll('.cal-header-day'));
     calendarGrid.innerHTML = '';
     headers.forEach(h => calendarGrid.appendChild(h));
-    for (let i = 0; i < firstDay; i++) calendarGrid.appendChild(document.createElement('div'));
+
+    // Células vazias antes do primeiro dia
+    for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement('div');
+        calendarGrid.appendChild(empty);
+    }
+
+    // Dias do mês
     for (let i = 1; i <= lastDate; i++) {
         const d = document.createElement('div');
+        d.className = 'cal-day';
         d.textContent = i;
-        if (i === hoje.getDate() && month === hoje.getMonth() && year === hoje.getFullYear())
-            d.classList.add('today');
+
+        const isToday = i === hojeObj.getDate() && month === hojeObj.getMonth() && year === hojeObj.getFullYear();
+        if (isToday) d.classList.add('today');
+
+        // Data no formato ISO para o fetch
+        const dataISO = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+        d.dataset.data = dataISO;
+
+        d.addEventListener('click', () => abrirModalCal(dataISO));
         calendarGrid.appendChild(d);
     }
 }
+
+// Abre o pop-up de agendamentos de um dia específico
+async function abrirModalCal(dataISO) {
+    overlayCal.hidden = false;
+    modalCalLabel.textContent = 'Carregando…';
+    modalCalList.innerHTML = `<li style="opacity:.5;text-align:center;padding:1rem"><i class="fas fa-spinner fa-spin"></i></li>`;
+
+    try {
+        const r    = await fetch(`${AGENDAMENTOS_DATA_URL}?data=${dataISO}`);
+        const json = await r.json();
+        modalCalLabel.textContent = json.data_display;
+        renderAgList(modalCalList, json.agendamentos, fecharModalCal);
+    } catch {
+        modalCalList.innerHTML = `<li style="opacity:.5;text-align:center;padding:1rem">Erro ao carregar.</li>`;
+    }
+}
+
+function fecharModalCal() { overlayCal.hidden = true; }
+
+document.getElementById('modal-cal-fechar').addEventListener('click', fecharModalCal);
+overlayCal.addEventListener('click', e => { if (e.target === overlayCal) fecharModalCal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !overlayCal.hidden) fecharModalCal(); });
+
 document.getElementById('prevMonth').onclick = () => { currentDate.setMonth(currentDate.getMonth()-1); renderCalendar(); };
 document.getElementById('nextMonth').onclick = () => { currentDate.setMonth(currentDate.getMonth()+1); renderCalendar(); };
 renderCalendar();
+
+// ============================================================
+// 7. MINI SEÇÃO "HOJE"
+// ============================================================
+async function carregarHoje() {
+    const dataISO = toISOLocal(hojeObj);
+    try {
+        const r    = await fetch(`${AGENDAMENTOS_DATA_URL}?data=${dataISO}`);
+        const json = await r.json();
+
+        hojeListEl.innerHTML = '';
+        if (!json.agendamentos.length) {
+            hojeListEl.innerHTML = `
+                <li class="hoje-vazio">
+                    <i class="fas fa-calendar-times"></i>
+                    <span>Nenhum agendamento hoje</span>
+                </li>`;
+            return;
+        }
+        json.agendamentos.forEach(ag => {
+            const li = document.createElement('li');
+            li.className = 'hoje-item';
+            li.innerHTML = `
+                <span class="hoje-item-hora">${ag.hora}</span>
+                <span class="hoje-item-nome">${ag.nome_cliente}</span>
+                <span class="hoje-item-servico">${ag.servico_nome}</span>`;
+            li.addEventListener('click', () => abrirModal(ag.id));
+            hojeListEl.appendChild(li);
+        });
+    } catch {
+        hojeListEl.innerHTML = `<li class="hoje-vazio"><i class="fas fa-exclamation-circle"></i><span>Erro ao carregar</span></li>`;
+    }
+}
+carregarHoje();
 
 // ============================================================
 // Utilitário: pega CSRF token do cookie

@@ -32,4 +32,5 @@ urlpatterns = [
     path('barbeiro/agendamento/<int:agendamento_id>/detalhe/', views.detalhe_agendamento_barbeiro, name='detalhe_agendamento_barbeiro'),
     path('barbeiro/agendamento/<int:agendamento_id>/editar/', views.editar_agendamento_barbeiro, name='editar_agendamento_barbeiro'),
     path('barbeiro/agendamento/<int:agendamento_id>/excluir/', views.excluir_agendamento_barbeiro, name='excluir_agendamento_barbeiro'),
+    path('barbeiro/agendamentos-por-data/', views.agendamentos_por_data, name='agendamentos_por_data'),
 ]

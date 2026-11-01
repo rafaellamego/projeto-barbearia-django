@@ -750,3 +750,48 @@ def excluir_agendamento_barbeiro(request, agendamento_id):
     ag.delete()
     messages.success(request, 'Agendamento excluído.')
     return redirect('home_barbeiro')
+
+
+# ==================== AJAX: AGENDAMENTOS POR DATA (CALENDÁRIO) ====================
+def agendamentos_por_data(request):
+    """AJAX GET: retorna agendamentos do barbeiro logado para uma data específica."""
+    barbeiro = _barbeiro_logado_ou_401(request)
+    if not barbeiro:
+        return JsonResponse({'error': 'Sessão expirada.'}, status=401)
+
+    data_str = request.GET.get('data', '')
+    try:
+        data = datetime.datetime.strptime(data_str, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({'error': 'Data inválida.'}, status=400)
+
+    status_labels = {
+        'pendente':   'Pendente',
+        'confirmado': 'Confirmado',
+        'execucao':   'Em atendimento',
+        'concluido':  'Concluído',
+        'cancelado':  'Cancelado',
+    }
+
+    agendamentos = (
+        Agendamento.objects
+        .filter(barbeiro=barbeiro, data=data)
+        .select_related('servico', 'usuario')
+        .order_by('hora')
+    )
+
+    resultado = []
+    for ag in agendamentos:
+        resultado.append({
+            'id':           ag.id,
+            'nome_cliente': ag.nome_cliente(),
+            'hora':         ag.hora.strftime('%H:%M'),
+            'servico_nome': ag.servico.nome if ag.servico else '—',
+            'status':       ag.status,
+            'status_label': status_labels.get(ag.status, ag.status),
+        })
+
+    return JsonResponse({
+        'data_display': data.strftime('%d/%m/%Y'),
+        'agendamentos': resultado,
+    })
