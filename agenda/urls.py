@@ -21,6 +21,10 @@ urlpatterns = [
     path('agendamento/<int:agendamento_id>/detalhe/', views.detalhe_agendamento_cliente, name='detalhe_agendamento_cliente'),
     path('agendamento/<int:agendamento_id>/editar/', views.editar_agendamento_cliente, name='editar_agendamento_cliente'),
 
+    # --- SSE: ATUALIZAÇÕES EM TEMPO REAL (cliente) ---
+    path('agendamentos/stream/', views.agendamentos_stream, name='agendamentos_stream'),
+    path('agendamentos/snapshot/', views.agendamentos_snapshot, name='agendamentos_snapshot'),
+
     # --- ROTAS DO BARBEIRO ---
     path('gerencia/', views.gerencia, name='gerencia_barbeiro'),
     path('home/barbeiro/', views.home_barbeiro, name='home_barbeiro'),
@@ -33,4 +37,5 @@ urlpatterns = [
     path('barbeiro/agendamento/<int:agendamento_id>/editar/', views.editar_agendamento_barbeiro, name='editar_agendamento_barbeiro'),
     path('barbeiro/agendamento/<int:agendamento_id>/excluir/', views.excluir_agendamento_barbeiro, name='excluir_agendamento_barbeiro'),
     path('barbeiro/agendamentos-por-data/', views.agendamentos_por_data, name='agendamentos_por_data'),
+    path('barbeiro/kanban/stream/', views.barbeiro_kanban_stream, name='barbeiro_kanban_stream'),
 ]

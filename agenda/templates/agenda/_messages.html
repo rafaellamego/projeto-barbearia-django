@@ -103,7 +103,10 @@
 <div class="toast-container" role="region" aria-label="Notificações" aria-live="polite">
   {% for message in messages %}
   {% with tag=message.tags %}
-  <div class="toast toast-{{ tag }}" role="alert">
+  <div class="toast toast-{{ tag }}"
+       role="{% if tag == 'error' or tag == 'danger' %}alert{% else %}status{% endif %}"
+       aria-live="{% if tag == 'error' or tag == 'danger' %}assertive{% else %}polite{% endif %}"
+       aria-atomic="true">
     <span class="toast-icon" aria-hidden="true">
       {% if tag == 'success' %}✅
       {% elif tag == 'error' or tag == 'danger' %}❌

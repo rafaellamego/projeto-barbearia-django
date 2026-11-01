@@ -267,6 +267,13 @@
             .hero h1 { font-size: 1.7rem; }
             .action-grid { grid-template-columns: 1fr; }
         }
+
+        /* Foco visível para navegação por teclado */
+        :focus-visible {
+            outline: 2px solid #a855f7;
+            outline-offset: 3px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -274,69 +281,73 @@
 
 <!-- ══ TOP BAR ══ -->
 <header class="top-bar">
-    <a class="top-bar-brand" href="{% url 'home_cliente' %}">
+    <a class="top-bar-brand" href="{% url 'home_cliente' %}" aria-label="Agenda Aí — Início">
         <img src="{% static 'logo.png' %}" alt="Agenda Aí">
-        <span>Área do Cliente</span>
+        <span aria-hidden="true">Área do Cliente</span>
     </a>
-    <nav class="top-nav">
-        <a class="nav-link active" href="{% url 'home_cliente' %}">
-            <i class="fas fa-home"></i><span>Home</span>
+    <nav class="top-nav" aria-label="Navegação principal">
+        <a class="nav-link active" href="{% url 'home_cliente' %}" aria-current="page">
+            <i class="fas fa-home" aria-hidden="true"></i><span>Home</span>
         </a>
         <a class="nav-link" href="{% url 'meus_agendamentos' %}">
-            <i class="fas fa-calendar-alt"></i><span>Meus Agendamentos</span>
+            <i class="fas fa-calendar-alt" aria-hidden="true"></i><span>Meus Agendamentos</span>
         </a>
         <a class="nav-link" href="{% url 'agendamento' %}">
-            <i class="fas fa-calendar-plus"></i><span>Novo Agendamento</span>
+            <i class="fas fa-calendar-plus" aria-hidden="true"></i><span>Novo Agendamento</span>
         </a>
-        <a class="nav-sair" href="{% url 'logout_cliente' %}">
-            <i class="fas fa-sign-out-alt"></i> Sair
+        <a class="nav-sair" href="{% url 'logout_cliente' %}" aria-label="Sair da conta">
+            <i class="fas fa-sign-out-alt" aria-hidden="true"></i> Sair
         </a>
     </nav>
 </header>
 
 <!-- ══ CONTEÚDO ══ -->
-<div class="page-body">
+<main class="page-body" id="conteudo-principal">
 
     {% include 'agenda/_messages.html' %}
 
     <!-- Hero -->
     <div class="hero">
-        <div class="hero-icon"><i class="fas fa-cut"></i></div>
+        <div class="hero-icon" aria-hidden="true"><i class="fas fa-cut"></i></div>
         <h1>Bem-vindo, {{ nome_cliente }}!</h1>
         <p>Gerencie seus horários de forma fácil e rápida.</p>
     </div>
 
     <!-- Cards de ação -->
-    <div class="action-grid">
+    <div class="action-grid" role="list">
 
-        <a href="{% url 'agendamento' %}" class="action-card primary">
-            <div class="action-icon"><i class="fas fa-calendar-check"></i></div>
+        <a href="{% url 'agendamento' %}" class="action-card primary" role="listitem">
+            <div class="action-icon" aria-hidden="true"><i class="fas fa-calendar-check"></i></div>
             <div>
                 <p class="action-title">Agendar Horário</p>
                 <p class="action-desc">Escolha serviço, barbeiro, data e horário em poucos passos.</p>
             </div>
-            <span class="action-arrow"><i class="fas fa-arrow-right"></i> Agendar agora</span>
+            <span class="action-arrow" aria-hidden="true"><i class="fas fa-arrow-right"></i> Agendar agora</span>
         </a>
 
-        <a href="{% url 'meus_agendamentos' %}" class="action-card">
-            <div class="action-icon"><i class="fas fa-list-alt"></i></div>
+        <a href="{% url 'meus_agendamentos' %}" class="action-card" role="listitem">
+            <div class="action-icon" aria-hidden="true"><i class="fas fa-list-alt"></i></div>
             <div>
                 <p class="action-title">Meus Agendamentos</p>
                 <p class="action-desc">Veja, edite ou cancele seus horários marcados.</p>
             </div>
-            <span class="action-arrow"><i class="fas fa-arrow-right"></i> Ver agendamentos</span>
+            <span class="action-arrow" aria-hidden="true"><i class="fas fa-arrow-right"></i> Ver agendamentos</span>
         </a>
 
     </div>
-</div>
+</main>
 
 <!-- ══ RODAPÉ ══ -->
 <footer class="footer-social">
-    <a href="#" class="social-item">
-        <i class="fab fa-instagram"></i> @AgendaAi
+    <a href="https://instagram.com/agendaai" class="social-item"
+       target="_blank" rel="noopener noreferrer"
+       aria-label="Instagram do Agenda Aí (abre em nova aba)">
+        <i class="fab fa-instagram" aria-hidden="true"></i> @AgendaAi
     </a>
-    <a href="#" class="social-item">
-        <i class="fab fa-whatsapp"></i> (11) 99999-9999
+    <a href="https://wa.me/5511999999999" class="social-item"
+       target="_blank" rel="noopener noreferrer"
+       aria-label="WhatsApp (11) 99999-9999 (abre em nova aba)">
+        <i class="fab fa-whatsapp" aria-hidden="true"></i> (11) 99999-9999
     </a>
 </footer>
 

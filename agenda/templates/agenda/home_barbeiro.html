@@ -1221,6 +1221,115 @@ carregarHoje();
 function getCsrf() {
     return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
 }
+
+// ============================================================
+// SSE — atualização em tempo real do kanban
+// ============================================================
+const KANBAN_STREAM_URL = '{% url "barbeiro_kanban_stream" %}';
+
+// Cria um card DOM a partir dos dados recebidos pelo SSE
+function criarCardSSE(ag) {
+    const div = document.createElement('div');
+    div.className = 'glass-card';
+    div.dataset.id      = ag.id;
+    div.dataset.nome    = ag.nome_cliente;
+    div.dataset.servico = ag.servico_nome;
+    div.dataset.data    = ag.data;
+    div.dataset.hora    = ag.hora;
+    div.innerHTML = `
+        <div class="card-hora">${ag.hora}</div>
+        <div class="card-data">${ag.data}</div>
+        <div class="card-nome">${ag.nome_cliente}</div>
+        <div class="card-servico">${ag.servico_nome}</div>`;
+
+    // Clique abre modal de edição
+    div.addEventListener('click', () => {
+        if (!cardFoiArrastado) abrirModal(ag.id);
+    });
+    return div;
+}
+
+// Atualiza os dados visíveis de um card já existente
+function atualizarCardSSE(agId, dados) {
+    const card = document.querySelector(`.glass-card[data-id="${agId}"]`);
+    if (!card) return;
+
+    card.dataset.nome    = dados.nome_cliente;
+    card.dataset.servico = dados.servico_nome;
+    card.dataset.data    = dados.data;
+    card.dataset.hora    = dados.hora;
+
+    const q = sel => card.querySelector(sel);
+    if (q('.card-hora'))    q('.card-hora').textContent    = dados.hora;
+    if (q('.card-data'))    q('.card-data').textContent    = dados.data;
+    if (q('.card-nome'))    q('.card-nome').textContent    = dados.nome_cliente;
+    if (q('.card-servico')) q('.card-servico').textContent = dados.servico_nome;
+
+    // Move o card para a coluna correta se o status mudou
+    const colunaAtual  = card.closest('.sortable-list');
+    const colunaAlvo   = document.getElementById(dados.status);
+    if (colunaAlvo && colunaAtual !== colunaAlvo) {
+        colunaAlvo.appendChild(card);
+    }
+
+    // Pulso visual
+    card.style.transition = 'box-shadow .15s';
+    card.style.boxShadow  = '0 0 0 3px rgba(168,85,247,0.7)';
+    setTimeout(() => { card.style.boxShadow = ''; }, 700);
+}
+
+// Remove um card do kanban
+function removerCardSSE(agId) {
+    const card = document.querySelector(`.glass-card[data-id="${agId}"]`);
+    if (!card) return;
+    card.style.transition = 'opacity .35s, transform .35s';
+    card.style.opacity    = '0';
+    card.style.transform  = 'scale(0.88)';
+    setTimeout(() => card.remove(), 380);
+}
+
+// Conecta ao SSE com reconexão automática
+let kanbanSSE = null;
+let kanbanReconectar = null;
+
+function conectarKanbanSSE() {
+    if (kanbanSSE) kanbanSSE.close();
+
+    kanbanSSE = new EventSource(KANBAN_STREAM_URL);
+
+    kanbanSSE.addEventListener('kanban_update', e => {
+        try {
+            const eventos = JSON.parse(e.data);
+            eventos.forEach(ev => {
+                if (ev.tipo === 'card_new') {
+                    // Insere na coluna correta (padrão: pendente)
+                    const coluna = document.getElementById(ev.status || 'pendente');
+                    if (coluna) coluna.appendChild(criarCardSSE(ev));
+                } else if (ev.tipo === 'card_update') {
+                    atualizarCardSSE(ev.id, ev);
+                } else if (ev.tipo === 'card_remove') {
+                    removerCardSSE(ev.id);
+                }
+            });
+        } catch { /* JSON inválido — ignora */ }
+    });
+
+    kanbanSSE.addEventListener('ping', () => { /* heartbeat — conexão ativa */ });
+
+    kanbanSSE.onerror = () => {
+        kanbanSSE.close();
+        kanbanSSE = null;
+        clearTimeout(kanbanReconectar);
+        kanbanReconectar = setTimeout(conectarKanbanSSE, 8000);
+    };
+}
+
+conectarKanbanSSE();
+
+window.addEventListener('pagehide', () => {
+    if (kanbanSSE) kanbanSSE.close();
+    clearTimeout(kanbanReconectar);
+});
 </script>
 </body>
 </html>

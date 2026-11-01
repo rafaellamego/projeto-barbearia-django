@@ -157,7 +157,24 @@
         background: rgba(255,255,255,0.15);
     }
 
-    /* Botão Principal */
+    /* Foco visível para navegação por teclado */
+    :focus-visible {
+        outline: 2px solid #a855f7;
+        outline-offset: 3px;
+        border-radius: 4px;
+    }
+
+    /* Label visualmente oculto mas acessível a leitores de tela */
+    .sr-only {
+        position: absolute;
+        width: 1px; height: 1px;
+        padding: 0; margin: -1px;
+        overflow: hidden;
+        clip: rect(0,0,0,0);
+        white-space: nowrap;
+        border: 0;
+    }
+
     .btn-main {
         background: #000;
         color: white;
@@ -234,41 +251,52 @@
 <body>
     {% include 'agenda/accessibility_bar.html' %}
 
-    <div class="top-bar">Bem-vindo ao Agenda Aí, sua agenda eletrônica.</div>
+    <header>
+        <div class="top-bar">Bem-vindo ao Agenda Aí, sua agenda eletrônica.</div>
+    </header>
 
-    <div class="main-content">
+    <main class="main-content" id="conteudo-principal">
         <div class="login-container">
             <div class="login-card">
                 <div class="brand-section">
                     <img src="{% static 'logo.png' %}" alt="Agenda Aí" class="logo-img">
-                    <h1>Agenda Aí</h1>
                     <p class="subtitle">Agenda Online</p>
                 </div>
 
-            <div class="tabs">
-                <a href="{% url 'login' %}" 
-                class="tab-btn {% if tipo != 'barbeiro' %}active{% endif %}">
-                Sou Cliente
-                </a>
-                <!-- AQUI ESTÁ O DETALHE: Troque href="/?tipo=barbeiro" por {% url 'login_barbeiro' %} -->
-                <a href="{% url 'login_barbeiro' %}"
-                class="tab-btn {% if tipo == 'barbeiro' %}active{% endif %}">
-                Sou Barbeiro
-                </a>
-            </div>
+            <nav aria-label="Tipo de acesso">
+                <div class="tabs">
+                    <a href="{% url 'login' %}"
+                    class="tab-btn {% if tipo != 'barbeiro' %}active{% endif %}"
+                    {% if tipo != 'barbeiro' %}aria-current="page"{% endif %}>
+                    Sou Cliente
+                    </a>
+                    <a href="{% url 'login_barbeiro' %}"
+                    class="tab-btn {% if tipo == 'barbeiro' %}active{% endif %}"
+                    {% if tipo == 'barbeiro' %}aria-current="page"{% endif %}>
+                    Sou Barbeiro
+                    </a>
+                </div>
+            </nav>
 
                 {% include 'agenda/_messages.html' %}
 
-                <form method="POST">
+                <form method="POST" novalidate>
                     {% csrf_token %}
                     <div class="input-wrapper">
-                        <i class="fas fa-phone"></i>
-                        <!-- <input type="text" name="telefone" placeholder="Telefone (DDD + número)" required> -->
-                        <input type="text" id="telefone" name="telefone" placeholder="Telefone (DDD + número)" required>
+                        <label for="telefone" class="sr-only">Telefone (DDD + número)</label>
+                        <i class="fas fa-phone" aria-hidden="true"></i>
+                        <input type="tel" id="telefone" name="telefone"
+                               placeholder="Telefone (DDD + número)"
+                               autocomplete="tel"
+                               required>
                     </div>
                     <div class="input-wrapper">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" name="senha" placeholder="Senha" required>
+                        <label for="senha" class="sr-only">Senha</label>
+                        <i class="fas fa-lock" aria-hidden="true"></i>
+                        <input type="password" id="senha" name="senha"
+                               placeholder="Senha"
+                               autocomplete="current-password"
+                               required>
                     </div>
                     <button type="submit" class="btn-main">Acessar Agenda</button>
                 </form>
@@ -278,18 +306,24 @@
                 {% endif %}
             </div>
         </div>
-    </div>
+    </main>
 
-    <div class="footer-social">
-        <a href="https://instagram.com/suabarbearia" class="social-item" target="_blank">
-            <i class="fab fa-instagram"></i> @Univesp
-        </a>
-        <a href="https://wa.me/seunumerowhatsapp" class="social-item" target="_blank">
-            <i class="fab fa-whatsapp"></i> Contatos
-        </a>
-    </div>
+    <footer>
+        <div class="footer-social">
+            <a href="https://instagram.com/suabarbearia" class="social-item"
+               target="_blank" rel="noopener noreferrer"
+               aria-label="Instagram da barbearia (abre em nova aba)">
+                <i class="fab fa-instagram" aria-hidden="true"></i> @Univesp
+            </a>
+            <a href="https://wa.me/seunumerowhatsapp" class="social-item"
+               target="_blank" rel="noopener noreferrer"
+               aria-label="WhatsApp para contato (abre em nova aba)">
+                <i class="fab fa-whatsapp" aria-hidden="true"></i> Contatos
+            </a>
+        </div>
+    </footer>
 
     {% load static %}
-    <script src="{% static 'js/login.js' %}"></script>    
+    <script src="{% static 'js/login.js' %}"></script>
 </body>
 </html>

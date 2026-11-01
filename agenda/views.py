@@ -415,7 +415,7 @@ def salvar_agendamento(request):
             hora=hora,
         )
 
-        messages.success(request, '✅ Agendamento realizado com sucesso!')
+        messages.success(request, 'Agendamento realizado com sucesso!')
         return redirect('meus_agendamentos')
 
     return redirect('agendamento')
@@ -795,3 +795,166 @@ def agendamentos_por_data(request):
         'data_display': data.strftime('%d/%m/%Y'),
         'agendamentos': resultado,
     })
+
+
+# ==================== SSE: STREAM DE STATUS DO CLIENTE ====================
+import time
+from django.http import StreamingHttpResponse
+
+def _status_snapshot(usuario_id):
+    """Retorna dict {ag_id: status} para todos os agendamentos do cliente."""
+    return {
+        str(ag.id): ag.status
+        for ag in Agendamento.objects.filter(usuario_id=usuario_id).only('id', 'status')
+    }
+
+
+def agendamentos_stream(request):
+    """
+    SSE: mantém conexão aberta e envia um evento 'status_update' sempre que
+    algum agendamento do cliente logado mudar de status.
+    Faz poll leve no banco a cada 3 s (sem dependências externas).
+    """
+    usuario_id = request.session.get('usuario_id')
+    if not usuario_id:
+        return StreamingHttpResponse(status=401)
+
+    status_labels = {
+        'pendente':   'Pendente',
+        'confirmado': 'Confirmado',
+        'execucao':   'Em atendimento',
+        'concluido':  'Concluído',
+        'cancelado':  'Cancelado',
+    }
+
+    def event_stream():
+        anterior = _status_snapshot(usuario_id)
+        # Heartbeat inicial para confirmar conexão
+        yield 'event: ping\ndata: ok\n\n'
+
+        while True:
+            time.sleep(3)
+            try:
+                atual = _status_snapshot(usuario_id)
+            except Exception:
+                break
+
+            mudancas = []
+            for ag_id, status in atual.items():
+                if anterior.get(ag_id) != status:
+                    mudancas.append({
+                        'id':           ag_id,
+                        'status':       status,
+                        'status_label': status_labels.get(status, status),
+                    })
+
+            if mudancas:
+                payload = json.dumps(mudancas)
+                yield f'event: status_update\ndata: {payload}\n\n'
+                anterior = atual
+
+    response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+    response['Cache-Control'] = 'no-cache'
+    response['X-Accel-Buffering'] = 'no'   # desativa buffer no Nginx
+    return response
+
+
+# ==================== AJAX: SNAPSHOT DE STATUS (cliente) ====================
+def agendamentos_snapshot(request):
+    """
+    AJAX GET: retorna {id: status} de todos os agendamentos do cliente logado.
+    Usado pelo cliente para recuperar o estado atual após reconexão do SSE.
+    """
+    usuario_id = request.session.get('usuario_id')
+    if not usuario_id:
+        return JsonResponse({'error': 'Sessão expirada.'}, status=401)
+
+    snapshot = _status_snapshot(usuario_id)
+    return JsonResponse({'snapshot': snapshot})
+
+
+# ==================== SSE: STREAM DO KANBAN DO BARBEIRO ====================
+
+def _kanban_snapshot(barbeiro_id):
+    """
+    Retorna dict {ag_id: dados} com todos os agendamentos do barbeiro.
+    'dados' contém os campos relevantes para detectar qualquer mudança.
+    """
+    resultado = {}
+    ags = (
+        Agendamento.objects
+        .filter(barbeiro_id=barbeiro_id)
+        .select_related('servico', 'usuario')
+        .only('id', 'status', 'data', 'hora', 'nome_avulso',
+              'servico__nome', 'usuario__nome')
+    )
+    for ag in ags:
+        resultado[str(ag.id)] = {
+            'status':       ag.status,
+            'data':         ag.data.strftime('%d/%m/%Y'),
+            'hora':         ag.hora.strftime('%H:%M'),
+            'nome_cliente': ag.nome_cliente(),
+            'servico_nome': ag.servico.nome if ag.servico else '—',
+        }
+    return resultado
+
+
+def barbeiro_kanban_stream(request):
+    """
+    SSE: mantém conexão aberta e emite eventos ao kanban do barbeiro logado
+    sempre que um cliente cria, edita ou cancela um agendamento.
+
+    Eventos emitidos:
+      - card_new    → novo agendamento criado pelo cliente
+      - card_update → agendamento editado (data, hora, serviço)
+      - card_remove → agendamento cancelado/excluído
+    """
+    barbeiro_id = request.session.get('barbeiro_id')
+    if not barbeiro_id:
+        return StreamingHttpResponse(status=401)
+
+    def event_stream():
+        anterior = _kanban_snapshot(barbeiro_id)
+        yield 'event: ping\ndata: ok\n\n'
+
+        while True:
+            time.sleep(3)
+            try:
+                atual = _kanban_snapshot(barbeiro_id)
+            except Exception:
+                break
+
+            eventos = []
+
+            # Novos agendamentos
+            for ag_id, dados in atual.items():
+                if ag_id not in anterior:
+                    eventos.append({
+                        'tipo': 'card_new',
+                        'id':   ag_id,
+                        **dados,
+                    })
+
+            # Agendamentos removidos (cancelados pelo cliente)
+            for ag_id in anterior:
+                if ag_id not in atual:
+                    eventos.append({'tipo': 'card_remove', 'id': ag_id})
+
+            # Agendamentos editados (qualquer campo mudou)
+            for ag_id, dados in atual.items():
+                if ag_id in anterior and dados != anterior[ag_id]:
+                    eventos.append({
+                        'tipo': 'card_update',
+                        'id':   ag_id,
+                        **dados,
+                    })
+
+            if eventos:
+                payload = json.dumps(eventos)
+                yield f'event: kanban_update\ndata: {payload}\n\n'
+                anterior = atual
+
+    response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+    response['Cache-Control'] = 'no-cache'
+    response['X-Accel-Buffering'] = 'no'
+    return response

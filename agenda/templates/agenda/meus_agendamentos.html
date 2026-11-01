@@ -291,6 +291,75 @@
             .ag-grid { grid-template-columns: 1fr; }
             .modal { padding: 20px; }
         }
+
+        /* ══ TOAST SSE ══ */
+        .sse-toast-container {
+            position: fixed;
+            bottom: 72px; right: 20px;
+            z-index: 9000;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 10px;
+            max-width: min(360px, calc(100vw - 40px));
+        }
+        .sse-toast {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            font-size: .88rem;
+            line-height: 1.4;
+            backdrop-filter: blur(18px);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+            animation: sse-in .3s ease;
+            transition: opacity .4s ease, transform .4s ease;
+            position: relative;
+            overflow: hidden;
+            background: rgba(16,185,129,0.18);
+            border: 1px solid rgba(16,185,129,0.45);
+            color: #d1fae5;
+        }
+        .sse-toast.saindo {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        .sse-toast::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0;
+            height: 3px;
+            background: rgba(16,185,129,0.8);
+            border-radius: 0 0 14px 14px;
+            animation: sse-progress 5s linear forwards;
+        }
+        @keyframes sse-in {
+            from { opacity: 0; transform: translateX(20px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes sse-progress {
+            from { width: 100%; }
+            to   { width: 0%; }
+        }
+        .sse-toast-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+        .sse-toast-text { flex: 1; }
+        .sse-toast-close {
+            background: none; border: none; color: inherit;
+            opacity: .55; cursor: pointer; font-size: .8rem;
+            padding: 0; flex-shrink: 0; line-height: 1;
+            transition: opacity .15s;
+        }
+        .sse-toast-close:hover { opacity: 1; }
+
+        /* Animação de atualização no card */
+        @keyframes card-flash {
+            0%   { box-shadow: 0 0 0 0   rgba(168,85,247,0.7); }
+            50%  { box-shadow: 0 0 0 6px rgba(168,85,247,0.4); }
+            100% { box-shadow: 0 0 0 0   rgba(168,85,247,0); }
+        }
+        .ag-card.updated {
+            animation: card-flash .7s ease;
+        }
     </style>
 </head>
 <body>
@@ -332,7 +401,8 @@
     {% if agendamentos %}
     <div class="ag-grid">
         {% for a in agendamentos %}
-        <div class="ag-card status-{{ a.status }}" data-id="{{ a.id }}" role="button" tabindex="0"
+        <div class="ag-card status-{{ a.status }}" data-id="{{ a.id }}" data-status="{{ a.status }}"
+             role="button" tabindex="0"
              aria-label="Ver detalhes de {{ a.servico.nome }}">
 
             <div class="ag-card-top">
@@ -456,11 +526,15 @@
     </div>
 </div>
 
+<!-- Container de toasts SSE -->
+<div class="sse-toast-container" id="sse-toasts" aria-live="polite" aria-label="Notificações de atualização"></div>
+
 <script>
 const DETALHE_URL = '/agendamento/{id}/detalhe/';
 const EDITAR_URL  = '/agendamento/{id}/editar/';
 const CANCELAR_URL = '/cancelar-agendamento/{id}/';
 const HORARIOS_URL = '{% url "get_horarios" %}';
+const SSE_URL      = '{% url "agendamentos_stream" %}';
 
 const overlay    = document.getElementById('modal-overlay');
 const formEditar = document.getElementById('form-editar');
@@ -576,12 +650,7 @@ async function recarregarHorarios() {
     if (!agAtual) return;
     const data = document.getElementById('edit-data').value;
     if (!data) return;
-
-    // Busca o barbeiro_id do agendamento atual via dataset do card
-    const card = document.querySelector(`.ag-card[data-id="${agAtual}"]`);
     const servicoId = document.getElementById('edit-servico').value;
-
-    // Precisamos do barbeiro_id — guardamos no estado ao abrir o modal
     if (!barbAtual) return;
 
     statusMsg.textContent = 'Buscando horários…';
@@ -614,6 +683,113 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(
 function getCsrf() {
     return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
 }
+
+// ════════════════════════════════════════════════════
+//  SSE — atualização em tempo real do status
+// ════════════════════════════════════════════════════
+
+// Mapeamento de status → configuração visual
+const STATUS_CFG = {
+    pendente:   { label: 'Pendente',        badgeClass: 'badge-pendente',   cardClass: 'status-pendente',   icon: 'fa-hourglass-half' },
+    confirmado: { label: 'Confirmado',      badgeClass: 'badge-confirmado', cardClass: 'status-confirmado', icon: 'fa-check' },
+    execucao:   { label: 'Em atendimento',  badgeClass: 'badge-execucao',   cardClass: 'status-execucao',   icon: 'fa-cut' },
+    concluido:  { label: 'Concluído',       badgeClass: 'badge-concluido',  cardClass: 'status-concluido',  icon: 'fa-check-double' },
+    cancelado:  { label: 'Cancelado',       badgeClass: 'badge-cancelado',  cardClass: 'status-cancelado',  icon: 'fa-times' },
+};
+
+// Atualiza o card na tela sem recarregar
+function atualizarCard(agId, novoStatus, statusLabel) {
+    const card = document.querySelector(`.ag-card[data-id="${agId}"]`);
+    if (!card) return;
+
+    const cfg = STATUS_CFG[novoStatus];
+    if (!cfg) return;
+
+    // Atualiza classe de borda esquerda
+    Object.values(STATUS_CFG).forEach(c => card.classList.remove(c.cardClass));
+    card.classList.add(cfg.cardClass);
+    card.dataset.status = novoStatus;
+
+    // Atualiza badge
+    const badge = card.querySelector('.ag-badge');
+    if (badge) {
+        Object.values(STATUS_CFG).forEach(c => badge.classList.remove(c.badgeClass));
+        badge.classList.add(cfg.badgeClass);
+        badge.innerHTML = `<i class="fas ${cfg.icon}"></i> ${statusLabel}`;
+    }
+
+    // Pulso visual no card
+    card.classList.remove('updated');
+    void card.offsetWidth; // força reflow para reiniciar animação
+    card.classList.add('updated');
+}
+
+// Exibe toast de notificação SSE
+function exibirSseToast(mensagem) {
+    const container = document.getElementById('sse-toasts');
+    const toast = document.createElement('div');
+    toast.className = 'sse-toast';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    toast.innerHTML = `
+        <span class="sse-toast-icon" aria-hidden="true">🔔</span>
+        <span class="sse-toast-text">${mensagem}</span>
+        <button class="sse-toast-close" aria-label="Fechar notificação">✕</button>`;
+
+    toast.querySelector('.sse-toast-close').addEventListener('click', () => removerToast(toast));
+    container.appendChild(toast);
+
+    // Auto-dismiss após 5s
+    const timer = setTimeout(() => removerToast(toast), 5000);
+    toast.addEventListener('mouseenter', () => clearTimeout(timer));
+    toast.addEventListener('mouseleave', () => setTimeout(() => removerToast(toast), 2000));
+}
+
+function removerToast(toast) {
+    toast.classList.add('saindo');
+    setTimeout(() => toast.remove(), 400);
+}
+
+// Conecta ao SSE com reconexão automática
+let sseSource = null;
+let sseReconectarTimeout = null;
+
+function conectarSSE() {
+    if (sseSource) sseSource.close();
+
+    sseSource = new EventSource(SSE_URL);
+
+    sseSource.addEventListener('status_update', e => {
+        try {
+            const mudancas = JSON.parse(e.data);
+            mudancas.forEach(({ id, status, status_label }) => {
+                atualizarCard(id, status, status_label);
+                exibirSseToast(`Agendamento atualizado para <strong>${status_label}</strong>`);
+            });
+        } catch { /* JSON inválido — ignora */ }
+    });
+
+    sseSource.addEventListener('ping', () => {
+        // heartbeat recebido — conexão ativa
+    });
+
+    sseSource.onerror = () => {
+        sseSource.close();
+        sseSource = null;
+        // Tenta reconectar após 8 segundos
+        clearTimeout(sseReconectarTimeout);
+        sseReconectarTimeout = setTimeout(conectarSSE, 8000);
+    };
+}
+
+// Inicia SSE ao carregar a página
+conectarSSE();
+
+// Fecha SSE ao navegar para outra página
+window.addEventListener('pagehide', () => {
+    if (sseSource) sseSource.close();
+    clearTimeout(sseReconectarTimeout);
+});
 </script>
 </body>
 </html>
