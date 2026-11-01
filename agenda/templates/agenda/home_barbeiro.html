@@ -4,31 +4,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Barbeiro - Agenda Aí</title>
+    <title>Painel Barbeiro — Agenda Aí</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    
+
     <style>
         :root {
-            --purple-glass: rgba(168, 85, 247, 0.2);
+            --purple-glass: rgba(168,85,247,0.2);
             --purple-bright: #a855f7;
-            --border-glass: rgba(255, 255, 255, 0.15);
+            --border-glass: rgba(255,255,255,0.15);
+
+            /* Cores suaves por coluna — fundo e borda esquerda */
+            --col-pendente-bg:   rgba(239,68,68,0.08);
+            --col-pendente-left: rgba(239,68,68,0.55);
+            --col-confirmado-bg: rgba(59,130,246,0.08);
+            --col-confirmado-left: rgba(59,130,246,0.55);
+            --col-execucao-bg:  rgba(234,179,8,0.08);
+            --col-execucao-left: rgba(234,179,8,0.55);
+            --col-concluido-bg:  rgba(16,185,129,0.08);
+            --col-concluido-left: rgba(16,185,129,0.55);
+
+            /* Cor do card por coluna */
+            --card-pendente:   rgba(239,68,68,0.12);
+            --card-confirmado: rgba(59,130,246,0.12);
+            --card-execucao:   rgba(234,179,8,0.12);
+            --card-concluido:  rgba(16,185,129,0.12);
         }
 
         html { background-color: #0a0519; }
         body {
-            background: linear-gradient(rgba(25,10,40,0.8), rgba(10,5,25,0.9)), url('{% static "fundo_barbearia.png" %}') no-repeat center center fixed;
+            background: linear-gradient(rgba(25,10,40,0.8),rgba(10,5,25,0.9)),
+                        url('{% static "fundo_barbearia.png" %}') no-repeat center center fixed;
             background-size: cover;
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
             margin: 0;
             color: white;
             display: flex;
             min-height: 100vh;
         }
 
+        /* ---- Sidebar ---- */
         .sidebar {
             width: 260px;
-            background: rgba(20, 10, 30, 0.6);
+            background: rgba(20,10,30,0.6);
             backdrop-filter: blur(30px);
             border-right: 1px solid var(--border-glass);
             display: flex;
@@ -38,308 +56,786 @@
             height: 100vh;
             z-index: 100;
         }
-
-        .sidebar h2 { font-size: 1.2rem; margin-bottom: 40px; color: var(--purple-bright); text-align: center; }
-
-        .menu-item {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: 0.3s;
-            color: rgba(255,255,255,0.7);
-            text-decoration: none;
-        }
-
-        .menu-item i { font-size: 1.2rem; margin-right: 15px; width: 25px; }
-        .menu-item:hover { background: var(--purple-glass); color: white; }
-        .menu-item.active { background: var(--purple-glass); border-left: 4px solid var(--purple-bright); color: white; }
-
-        main {
-            flex: 1;
-            margin-left: 260px;
-            padding: 40px;
+        /* Logo na sidebar */
+        .sidebar-logo {
             display: flex;
             flex-direction: column;
             align-items: center;
+            margin-bottom: 36px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-glass);
+        }
+        .sidebar-logo img {
+            height: 90px;
+            width: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 0 12px rgba(168,85,247,0.55));
+            transition: filter .3s;
+        }
+        .sidebar-logo img:hover {
+            filter: drop-shadow(0 0 20px rgba(168,85,247,0.9));
+        }
+        .sidebar-logo span {
+            margin-top: 10px;
+            font-size: .7rem;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.35);
+        }
+        .sidebar h2 { font-size: 1.2rem; margin-bottom: 40px; color: var(--purple-bright); text-align: center; }
+        /* ---- Seção da sidebar ---- */
+        .sidebar-section-label {
+            font-size: .6rem;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.25);
+            padding: 0 8px;
+            margin: 18px 0 8px;
         }
 
-        .top-header {
-            width: 100%;
-            max-width: 1000px;
+        /* ---- Menu item ---- */
+        .menu-item {
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 40px;
+            align-items: center;
+            padding: 12px 14px;
+            margin-bottom: 4px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background .22s, color .22s, box-shadow .22s;
+            color: rgba(255,255,255,0.55);
+            text-decoration: none;
+            position: relative;
+            gap: 0;
         }
 
-        .kanban-container {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-            width: 100%;
+        /* Ícone dentro de um quadradinho */
+        .menu-item .mi-icon {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.06);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+            margin-right: 13px;
+            flex-shrink: 0;
+            transition: background .22s, color .22s;
         }
+
+        .menu-item .mi-label {
+            font-size: .88rem;
+            font-weight: 500;
+            flex: 1;
+        }
+
+        /* Seta indicadora no hover */
+        .menu-item .mi-arrow {
+            font-size: .65rem;
+            opacity: 0;
+            transform: translateX(-4px);
+            transition: opacity .2s, transform .2s;
+            color: var(--purple-bright);
+        }
+
+        .menu-item:hover {
+            background: rgba(255,255,255,0.07);
+            color: white;
+        }
+        .menu-item:hover .mi-icon {
+            background: var(--purple-glass);
+            color: var(--purple-bright);
+        }
+        .menu-item:hover .mi-arrow {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Estado ativo */
+        .menu-item.active {
+            background: rgba(168,85,247,0.18);
+            color: white;
+            box-shadow: inset 0 0 0 1px rgba(168,85,247,0.3);
+        }
+        .menu-item.active .mi-icon {
+            background: var(--purple-bright);
+            color: white;
+            box-shadow: 0 4px 14px rgba(168,85,247,0.5);
+        }
+        .menu-item.active .mi-arrow { opacity: 1; transform: translateX(0); }
+
+        /* ---- Zona de exclusão ---- */
+        #delete-zone {
+            background: rgba(239,68,68,0.06) !important;
+            border: 1px dashed rgba(239,68,68,0.3);
+            color: rgba(239,68,68,0.7) !important;
+        }
+        #delete-zone .mi-icon {
+            background: rgba(239,68,68,0.12) !important;
+            color: rgba(239,68,68,0.8) !important;
+        }
+        #delete-zone:hover {
+            background: rgba(239,68,68,0.14) !important;
+            border-color: rgba(239,68,68,0.6);
+            color: #fca5a5 !important;
+        }
+        #delete-zone:hover .mi-icon {
+            background: rgba(239,68,68,0.25) !important;
+            color: #fca5a5 !important;
+        }
+
+        /* ---- Botão Sair ---- */
+        .menu-item.sair {
+            color: rgba(255,255,255,0.4);
+        }
+        .menu-item.sair:hover {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.8);
+        }
+        .menu-item.sair .mi-icon {
+            background: rgba(255,255,255,0.05);
+        }
+
+        /* ---- Divisor no rodapé da sidebar ---- */
+        .sidebar-divider {
+            border: none;
+            border-top: 1px solid var(--border-glass);
+            margin: 16px 0;
+        }
+
+        /* ---- Layout principal ---- */
+        main { flex: 1; margin-left: 260px; padding: 40px; display: flex; flex-direction: column; align-items: center; }
+        .top-header { width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+
+        /* ---- Welcome block ---- */
+        .welcome-block {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .welcome-greeting {
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--purple-bright);
+            opacity: .95;
+        }
+        .welcome-greeting i {
+            margin-right: 8px;
+            font-size: 1.15rem;
+        }
+        .welcome-name {
+            font-size: 1.2rem;
+            font-weight: 400;
+            opacity: .8;
+            margin: 0;
+        }
+        .welcome-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 4px 0 0;
+            background: linear-gradient(120deg, #fff 40%, var(--purple-bright));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+        }
+        .welcome-date {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin-top: 10px;
+            font-size: .85rem;
+            color: rgba(255,255,255,0.55);
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 5px 14px;
+            width: fit-content;
+        }
+        .welcome-date i {
+            color: var(--purple-bright);
+        }
+
+        /* ---- Kanban ---- */
+        .kanban-container { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; width: 100%; }
 
         .kanban-column {
-            background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(10px);
             border: 1px solid var(--border-glass);
             border-radius: 20px;
             padding: 15px;
-            width: 280px;
+            width: 260px;
             min-height: 450px;
         }
+        .kanban-column.col-pendente   { background: var(--col-pendente-bg);   border-left: 3px solid var(--col-pendente-left); }
+        .kanban-column.col-confirmado { background: var(--col-confirmado-bg); border-left: 3px solid var(--col-confirmado-left); }
+        .kanban-column.col-execucao   { background: var(--col-execucao-bg);   border-left: 3px solid var(--col-execucao-left); }
+        .kanban-column.col-concluido  { background: var(--col-concluido-bg);  border-left: 3px solid var(--col-concluido-left); }
 
         .column-header {
-            text-align: center;
-            padding: 10px 0 20px;
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            text-align: center; padding: 10px 0 20px; font-weight: bold;
+            text-transform: uppercase; font-size: .8rem;
+            display: flex; flex-direction: column; align-items: center;
         }
-        .column-header i { font-size: 1.5rem; margin-bottom: 10px; color: var(--purple-bright); }
+        .column-header i { font-size: 1.4rem; margin-bottom: 8px; }
+        .col-pendente   .column-header i { color: rgba(239,68,68,0.8); }
+        .col-confirmado .column-header i { color: rgba(59,130,246,0.8); }
+        .col-execucao   .column-header i { color: rgba(234,179,8,0.8); }
+        .col-concluido  .column-header i { color: rgba(16,185,129,0.8); }
 
+        /* ---- Cards ---- */
         .glass-card {
-            background: rgba(255, 255, 255, 0.07);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 15px;
-            cursor: grab;
-            transition: 0.2s;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: transform .15s, box-shadow .15s;
+            position: relative;
+        }
+        .glass-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
+
+        /* Impede seleção de texto ao arrastar o card */
+        .glass-card {
+            -webkit-user-select: none;
+            user-select: none;
         }
 
-        .glass-card:active { cursor: grabbing; }
-        .sortable-ghost { opacity: 0.3; transform: scale(0.9); }
+        .col-pendente   .glass-card { background: var(--card-pendente);   border-left: 3px solid rgba(239,68,68,0.5); }
+        .col-confirmado .glass-card { background: var(--card-confirmado); border-left: 3px solid rgba(59,130,246,0.5); }
+        .col-execucao   .glass-card { background: var(--card-execucao);   border-left: 3px solid rgba(234,179,8,0.5); }
+        .col-concluido  .glass-card { background: var(--card-concluido);  border-left: 3px solid rgba(16,185,129,0.5); opacity: .85; }
 
-        .date-slot { color: var(--purple-bright); font-weight: bold; margin-top: 5px; }
-        .time-slot { color: var(--purple-bright); font-weight: bold; margin-left: 120px; }
-        
-        .client-details h3 { margin: 0; font-size: 1rem; }
-        .client-details span { font-size: 0.8rem; opacity: 0.6; }
+        .card-hora { font-size: .8rem; opacity: .6; margin-bottom: 4px; }
+        .card-data { font-weight: bold; font-size: .9rem; }
+        .card-nome { margin-top: 5px; font-size: .95rem; font-weight: 600; }
+        .card-servico { font-size: .8rem; opacity: .6; }
+        .sortable-ghost { opacity: .3; transform: scale(.92); }
 
-        .calendar-glass {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-glass);
-            border-radius: 15px;
-            padding: 15px;
-            width: 220px;
-        }
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 0.9rem; }
+        /* ---- Mini-calendário ---- */
+        .calendar-glass { background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); border-radius: 15px; padding: 15px; width: 220px; }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: .9rem; }
         .calendar-header button { background: none; border: none; color: white; cursor: pointer; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 0.8rem; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 5px; text-align: center; font-size: .8rem; }
         .calendar-grid div { padding: 5px 0; }
         .today { background: var(--purple-bright); border-radius: 5px; font-weight: bold; }
-        .agdt  { background: var(--border-glass); border-radius: 7px; font-weight: bold;}
 
+        /* ---- Zona de exclusão ---- */
+        #delete-zone { border: 1px dashed rgba(255,80,80,0.4); margin-top: 20px; }
+        #delete-zone i { color: #ff6b6b; }
+
+        /* ===================== POP-UP / MODAL ===================== */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(4px);
+            z-index: 500;
+            display: flex; align-items: center; justify-content: center;
+            padding: 1rem;
+        }
+        .modal-overlay[hidden] { display: none; }
+
+        .modal {
+            background: rgba(20,10,35,0.97);
+            border: 1px solid rgba(168,85,247,0.4);
+            border-radius: 1.25rem;
+            padding: 1.75rem;
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        .modal h2 { margin: 0 0 1.25rem; font-size: 1.2rem; }
+
+        .modal-close {
+            position: absolute; top: 1rem; right: 1rem;
+            background: rgba(255,255,255,0.1); border: none; color: white;
+            width: 2rem; height: 2rem; border-radius: 50%;
+            cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center;
+        }
+        .modal-close:hover { background: rgba(255,255,255,0.2); }
+
+        .detail-row { display: flex; gap: .5rem; margin-bottom: .6rem; font-size: .9rem; }
+        .detail-label { opacity: .6; min-width: 90px; }
+
+        .modal-divider { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 1.25rem 0; }
+
+        .modal label { display: block; margin-bottom: .35rem; font-size: .85rem; opacity: .8; font-weight: 700; }
+        .modal select, .modal input[type="date"], .modal textarea {
+            width: 100%; padding: .65rem .9rem;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid var(--border-glass);
+            border-radius: .6rem;
+            color: white; font: inherit;
+            box-sizing: border-box;
+            margin-bottom: .9rem;
+        }
+        .modal select option { background: #1a0a2e; }
+        .modal textarea { resize: vertical; min-height: 60px; }
+
+        .horarios-grid-modal { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .9rem; }
+        .horario-btn-modal {
+            background: rgba(255,255,255,0.08); border: 1px solid var(--border-glass);
+            color: white; padding: .45rem .75rem; border-radius: .45rem;
+            cursor: pointer; font: inherit; font-size: .8rem; transition: .15s;
+        }
+        .horario-btn-modal:hover { background: var(--purple-glass); }
+        .horario-btn-modal[aria-pressed="true"] { background: var(--purple-bright); border-color: white; font-weight: 700; }
+        .horario-btn-modal:disabled { opacity: .3; cursor: not-allowed; }
+
+        .modal-actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1rem; }
+        .btn { padding: .6rem 1.25rem; border-radius: 2rem; border: none; cursor: pointer; font: inherit; font-weight: 700; display: inline-flex; align-items: center; gap: .4rem; text-decoration: none; }
+        .btn-save   { background: linear-gradient(135deg,#667eea,#764ba2); color: white; }
+        .btn-delete { background: rgba(239,68,68,0.25); border: 1px solid rgba(239,68,68,0.5); color: #fca5a5; }
+        .btn-cancel { background: rgba(255,255,255,0.1); color: white; }
+        .btn:hover { opacity: .85; }
+
+        .status-msg-modal { font-size: .8rem; opacity: .7; margin-bottom: .5rem; min-height: 1rem; }
+
+        /* ---- Responsivo ---- */
         @media (max-width: 1024px) {
-            .sidebar { width: 80px; }
-            .sidebar h2, .menu-item span { display: none; }
+            .sidebar { width: 80px; padding: 20px 10px; }
+            .sidebar-logo span,
+            .mi-label,
+            .mi-arrow,
+            .sidebar-section-label { display: none; }
+            .sidebar-logo img { height: 52px; }
+            .menu-item { justify-content: center; padding: 12px; }
+            .menu-item .mi-icon { margin-right: 0; }
             main { margin-left: 80px; }
         }
     </style>
 </head>
 <body>
-    {% include 'agenda/accessibility_bar.html' %}
+{% include 'agenda/accessibility_bar.html' %}
+{% include 'agenda/_messages.html' %}
 
-    <nav class="sidebar">
-        <h2>AGENDA AÍ</h2>
-        <a href="{% url 'gerencia_barbeiro' %}" class="menu-item">
-            <i class="fas fa-th-large"></i> <span>Gerência</span>
-        </a>
-        <a href="{% url 'cadastrar' %}" class="menu-item">
-            <i class="fas fa-plus-circle"></i> <span>Adicionar Agendamento Manualmente</span>
-        </a>
+<nav class="sidebar">
+    <div class="sidebar-logo">
+        <img src="{% static 'logo.png' %}" alt="Agenda Aí">
+        <span>Agenda Aí</span>
+    </div>
 
-        <div id="delete-zone" class="menu-item" style="border: 1px dashed rgba(255,0,0,0.3); margin-top: 20px;">
-            <i class="fas fa-trash-alt" style="color: #ff4d4d;"></i> <span>Excluir (Solte aqui)</span>
-        </div>
-        
-        <div style="margin-top: auto;">
-            <a href="{% url 'login' %}" class="menu-item">
-                <i class="fas fa-sign-out-alt"></i> <span>Sair</span>
-            </a>
-        </div>
-    </nav>
+    <p class="sidebar-section-label">Menu principal</p>
 
-    <main>
-        <div class="top-header">
-            <div class="date-info">
-                <h1 style="font-size: small;">Bem vindo, {{ barbeiro.nome }}</h1>
-                <h1 style="font-size: 1.5rem;">Agenda de Hoje</h1>
-                <p>Hoje é: <span id="data-atual"></span></p>
-            </div>
+    <a href="{% url 'home_barbeiro' %}" class="menu-item active">
+        <span class="mi-icon"><i class="fas fa-th-large"></i></span>
+        <span class="mi-label">Painel</span>
+        <i class="fas fa-chevron-right mi-arrow"></i>
+    </a>
 
-            <div class="calendar-glass">
-                <div class="calendar-header">
-                    <button id="prevMonth"><i class="fas fa-caret-left"></i></button>
-                    <span id="monthDisplay">Abril 2026</span>
-                    <button id="nextMonth"><i class="fas fa-caret-right"></i></button>
-                </div>
-                <div class="calendar-grid" id="calendarGrid">
-                    <div style="opacity: 0.5;">D</div><div style="opacity: 0.5;">S</div><div style="opacity: 0.5;">T</div>
-                    <div style="opacity: 0.5;">Q</div><div style="opacity: 0.5;">Q</div><div style="opacity: 0.5;">S</div><div style="opacity: 0.5;">S</div>
-                </div>
-            </div>
-        </div>
+    <a href="{% url 'gerencia_barbeiro' %}" class="menu-item">
+        <span class="mi-icon"><i class="fas fa-sliders-h"></i></span>
+        <span class="mi-label">Gerência</span>
+        <i class="fas fa-chevron-right mi-arrow"></i>
+    </a>
 
-        <div class="kanban-container">
-            <div class="kanban-column">
-                <div class="column-header"><i class="fas fa-clock"></i> Pendentes</div>
-                <div class="sortable-list" id="pendente" style="min-height: 150px;">
-                    {% for card in pendentes %}
-                    <div class="glass-card" data-id="{{ card.id }}">
-                        <span class="date-slot">{{ card.data|date:"d/m/Y" }}</span><span class="time-slot">{{ card.hora|time:"H:i" }}</span>
-                         
-                        <div class="client-details">
-                            <h3>{{ card.usuario.nome }}</h3>
-                            <span>Agendado</span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
+    <a href="{% url 'novo_agendamento_barbeiro' %}" class="menu-item">
+        <span class="mi-icon"><i class="fas fa-calendar-plus"></i></span>
+        <span class="mi-label">Novo Agendamento</span>
+        <i class="fas fa-chevron-right mi-arrow"></i>
+    </a>
 
-            <div class="kanban-column">
-                <div class="column-header"><i class="fas fa-cut"></i> Confirmado</div>
-                <div class="sortable-list" id="confirmado" style="min-height: 150px;">
-                    {% for card in confirmado %}
-                    <div class="glass-card" style="border-left: 4px solid #3b82f6;" data-id="{{ card.id }}">
-                        <div class="time-slot" style="color: #3b82f6;">{{ card.hora|time:"H:i" }}</div>
-                        <div class="client-details">
-                            <h3>{{ card.usuario.nome }}</h3>
-                            <span>confirmado</span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
+    <p class="sidebar-section-label">Ações</p>
 
+    <div id="delete-zone" class="menu-item">
+        <span class="mi-icon"><i class="fas fa-trash-alt"></i></span>
+        <span class="mi-label">Excluir (solte aqui)</span>
+    </div>
 
-            <div class="kanban-column">
-                <div class="column-header"><i class="fas fa-cut"></i> Em execução</div>
-                <div class="sortable-list" id="execucao" style="min-height: 150px;">
-                    {% for card in execucao %}
-                    <div class="glass-card" style="border-left: 4px solid #3b82f6;" data-id="{{ card.id }}">
-                        <div class="time-slot" style="color: #3b82f6;">{{ card.hora|time:"H:i" }}</div>
-                        <div class="client-details">
-                            <h3>{{ card.usuario.nome }}</h3>
-                            <span>Atendimento</span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
+    <hr class="sidebar-divider" style="margin-top: auto;">
 
-            <div class="kanban-column">
-                <div class="column-header"><i class="fas fa-check-double"></i> Concluídos</div>
-                <div class="sortable-list" id="concluido" style="min-height: 150px;">
-                    {% for card in concluidos %}
-                    <div class="glass-card" style="opacity: 0.6; border-left: 4px solid #10b981;" data-id="{{ card.id }}">
-                        <div class="time-slot" style="color: #10b981;">{{ card.hora|time:"H:i" }}</div>
-                        <div class="client-details">
-                            <h3>{{ card.usuario.nome }}</h3>
-                            <span>Concluído</span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
+    <a href="{% url 'logout_cliente' %}" class="menu-item sair">
+        <span class="mi-icon"><i class="fas fa-sign-out-alt"></i></span>
+        <span class="mi-label">Sair</span>
+    </a>
+</nav>
+
+<main>
+    <div class="top-header">
+        <div class="welcome-block">
+            <span class="welcome-greeting"><i class="fas fa-hand-sparkles"></i>Bem-vindo de volta</span>
+            <p class="welcome-name">Olá, <strong>{{ barbeiro.nome }}</strong></p>
+            <h1 class="welcome-title">Agenda de Hoje</h1>
+            <div class="welcome-date">
+                <i class="fas fa-calendar-day"></i>
+                <span>Hoje é: <span id="data-atual"></span></span>
             </div>
         </div>
-    </main>
+        <div class="calendar-glass">
+            <div class="calendar-header">
+                <button id="prevMonth" aria-label="Mês anterior"><i class="fas fa-caret-left"></i></button>
+                <span id="monthDisplay"></span>
+                <button id="nextMonth" aria-label="Próximo mês"><i class="fas fa-caret-right"></i></button>
+            </div>
+            <div class="calendar-grid" id="calendarGrid">
+                <div style="opacity:.5">D</div><div style="opacity:.5">S</div><div style="opacity:.5">T</div>
+                <div style="opacity:.5">Q</div><div style="opacity:.5">Q</div><div style="opacity:.5">S</div><div style="opacity:.5">S</div>
+            </div>
+        </div>
+    </div>
 
-    <script>
-        // 1. DATA ATUAL NO TOPO
-        const hoje = new Date();
-        document.getElementById('data-atual').innerText = hoje.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' });
+    <div class="kanban-container">
+        <!-- Pendente -->
+        <div class="kanban-column col-pendente">
+            <div class="column-header"><i class="fas fa-hourglass-half"></i>Pendentes</div>
+            <div class="sortable-list" id="pendente" style="min-height:150px;">
+                {% for card in pendentes %}
+                <div class="glass-card" data-id="{{ card.id }}"
+                     data-nome="{{ card.nome_cliente }}"
+                     data-servico="{{ card.servico.nome|default:'' }}"
+                     data-data="{{ card.data|date:'d/m/Y' }}"
+                     data-hora="{{ card.hora|time:'H:i' }}">
+                    <div class="card-hora">{{ card.hora|time:"H:i" }}</div>
+                    <div class="card-data">{{ card.data|date:"d/m/Y" }}</div>
+                    <div class="card-nome">{{ card.nome_cliente }}</div>
+                    <div class="card-servico">{{ card.servico.nome|default:"—" }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
 
-        // 2. KANBAN (DRAG & DROP COM PERSISTÊNCIA)
-        const colunas = ['pendente', 'confirmado', 'execucao', 'concluido'];
-        colunas.forEach(id => {
-            new Sortable(document.getElementById(id), {
-                group: 'kanban',
-                animation: 150,
-                ghostClass: 'sortable-ghost',
-                onEnd: function (evt) {
-                    const agendamentoId = evt.item.getAttribute('data-id');
-                    const novaColuna = evt.to.id;
+        <!-- Confirmado -->
+        <div class="kanban-column col-confirmado">
+            <div class="column-header"><i class="fas fa-check-circle"></i>Confirmado</div>
+            <div class="sortable-list" id="confirmado" style="min-height:150px;">
+                {% for card in confirmado %}
+                <div class="glass-card" data-id="{{ card.id }}"
+                     data-nome="{{ card.nome_cliente }}"
+                     data-servico="{{ card.servico.nome|default:'' }}"
+                     data-data="{{ card.data|date:'d/m/Y' }}"
+                     data-hora="{{ card.hora|time:'H:i' }}">
+                    <div class="card-hora">{{ card.hora|time:"H:i" }}</div>
+                    <div class="card-data">{{ card.data|date:"d/m/Y" }}</div>
+                    <div class="card-nome">{{ card.nome_cliente }}</div>
+                    <div class="card-servico">{{ card.servico.nome|default:"—" }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
 
-                    // Envia para o servidor salvar no MySQL
-                    fetch('/atualizar_status_agendamento/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            id: agendamentoId,
-                            status: novaColuna
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => console.log('Salvo:', data))
-                    .catch(err => console.error('Erro ao salvar:', err));
-                }
+        <!-- Em execução -->
+        <div class="kanban-column col-execucao">
+            <div class="column-header"><i class="fas fa-cut"></i>Em execução</div>
+            <div class="sortable-list" id="execucao" style="min-height:150px;">
+                {% for card in execucao %}
+                <div class="glass-card" data-id="{{ card.id }}"
+                     data-nome="{{ card.nome_cliente }}"
+                     data-servico="{{ card.servico.nome|default:'' }}"
+                     data-data="{{ card.data|date:'d/m/Y' }}"
+                     data-hora="{{ card.hora|time:'H:i' }}">
+                    <div class="card-hora">{{ card.hora|time:"H:i" }}</div>
+                    <div class="card-data">{{ card.data|date:"d/m/Y" }}</div>
+                    <div class="card-nome">{{ card.nome_cliente }}</div>
+                    <div class="card-servico">{{ card.servico.nome|default:"—" }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Concluído -->
+        <div class="kanban-column col-concluido">
+            <div class="column-header"><i class="fas fa-check-double"></i>Concluídos</div>
+            <div class="sortable-list" id="concluido" style="min-height:150px;">
+                {% for card in concluidos %}
+                <div class="glass-card" data-id="{{ card.id }}"
+                     data-nome="{{ card.nome_cliente }}"
+                     data-servico="{{ card.servico.nome|default:'' }}"
+                     data-data="{{ card.data|date:'d/m/Y' }}"
+                     data-hora="{{ card.hora|time:'H:i' }}">
+                    <div class="card-hora">{{ card.hora|time:"H:i" }}</div>
+                    <div class="card-data">{{ card.data|date:"d/m/Y" }}</div>
+                    <div class="card-nome">{{ card.nome_cliente }}</div>
+                    <div class="card-servico">{{ card.servico.nome|default:"—" }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- ===================== MODAL DE DETALHES / EDIÇÃO ===================== -->
+<div class="modal-overlay" id="modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+    <div class="modal">
+        <button class="modal-close" id="modal-fechar" aria-label="Fechar"><i class="fas fa-times"></i></button>
+        <h2 id="modal-titulo"><i class="fas fa-calendar-check"></i> Agendamento</h2>
+
+        <!-- Seção leitura -->
+        <div id="modal-leitura">
+            <div class="detail-row"><span class="detail-label">Cliente</span><span id="d-nome"></span></div>
+            <div class="detail-row"><span class="detail-label">Telefone</span><span id="d-telefone"></span></div>
+            <div class="detail-row"><span class="detail-label">Serviço</span><span id="d-servico"></span></div>
+            <div class="detail-row"><span class="detail-label">Data</span><span id="d-data"></span></div>
+            <div class="detail-row"><span class="detail-label">Hora</span><span id="d-hora"></span></div>
+            <div class="detail-row"><span class="detail-label">Status</span><span id="d-status"></span></div>
+            <div class="detail-row"><span class="detail-label">Observação</span><span id="d-obs"></span></div>
+        </div>
+
+        <hr class="modal-divider">
+
+        <!-- Seção edição -->
+        <form id="form-editar" method="POST">
+            {% csrf_token %}
+            <p style="font-size:.85rem;opacity:.65;margin:0 0 1rem;">Editar agendamento</p>
+
+            <label for="edit-servico">Serviço</label>
+            <select name="servico_id" id="edit-servico" required></select>
+
+            <label for="edit-data">Data</label>
+            <input type="date" name="data" id="edit-data" required>
+
+            <label>Horário</label>
+            <p class="status-msg-modal" id="status-modal-horarios"></p>
+            <div class="horarios-grid-modal" id="modal-horarios"></div>
+            <input type="hidden" name="horario" id="edit-horario">
+
+            <label for="edit-obs">Observação</label>
+            <textarea name="observacao" id="edit-obs"></textarea>
+
+            <div class="modal-actions">
+                <button type="submit" class="btn btn-save"><i class="fas fa-save"></i> Salvar</button>
+                <button type="button" class="btn btn-delete" id="btn-excluir-modal"><i class="fas fa-trash"></i> Excluir</button>
+                <button type="button" class="btn btn-cancel" id="btn-cancelar-modal"><i class="fas fa-times"></i> Fechar</button>
+            </div>
+        </form>
+
+        <!-- Formulário oculto para exclusão -->
+        <form id="form-excluir" method="POST" style="display:none;"></form>
+    </div>
+</div>
+
+<script>
+const DETALHE_URL  = '/barbeiro/agendamento/{id}/detalhe/';
+const EDITAR_URL   = '/barbeiro/agendamento/{id}/editar/';
+const EXCLUIR_URL  = '/barbeiro/agendamento/{id}/excluir/';
+const HORARIOS_URL = '{% url "get_horarios" %}';
+const BARBEIRO_ID  = '{{ barbeiro.id }}';
+
+// ============================================================
+// 1. DATA ATUAL
+// ============================================================
+document.getElementById('data-atual').textContent =
+    new Date().toLocaleDateString('pt-BR', {day:'numeric', month:'long'});
+
+// ============================================================
+// 2. KANBAN DRAG & DROP
+// ============================================================
+// Flag para distinguir clique simples de arraste real
+let cardFoiArrastado = false;
+
+['pendente','confirmado','execucao','concluido'].forEach(id => {
+    new Sortable(document.getElementById(id), {
+        group: 'kanban',
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        delay: 0,
+        touchStartThreshold: 4,
+        onStart() { cardFoiArrastado = false; },
+        onMove()  { cardFoiArrastado = true; },
+        onEnd(evt) {
+            if (!cardFoiArrastado) return; // clique puro — não faz nada aqui
+            fetch('/atualizar_status_agendamento/', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({id: evt.item.dataset.id, status: evt.to.id})
             });
-        });
-
-        // 3. ZONA DE EXCLUSÃO
-        new Sortable(document.getElementById('delete-zone'), {
-            group: 'kanban',
-            onAdd: function (evt) {
-                if (confirm("Deseja excluir este agendamento?")) {
-                    evt.item.remove();
-                } else {
-                    evt.from.appendChild(evt.item);
-                }
-            }
-        });
-
-        // 4. CALENDÁRIO DINÂMICO
-        const monthDisplay = document.getElementById('monthDisplay');
-        const calendarGrid = document.getElementById('calendarGrid');
-        let currentDate = new Date();
-
-        function renderCalendar() {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            const firstDay = new Date(year, month, 1).getDay();
-            const lastDate = new Date(year, month + 1, 0).getDate();
-            
-            const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            monthDisplay.innerText = `${months[month]} ${year}`;
-
-            const headers = Array.from(calendarGrid.children).slice(0, 7);
-            calendarGrid.innerHTML = '';
-            headers.forEach(h => calendarGrid.appendChild(h));
-
-            for (let i = 0; i < firstDay; i++) {
-                calendarGrid.appendChild(document.createElement('div'));
-            }
-
-            for (let i = 1; i <= lastDate; i++) {
-                const dayDiv = document.createElement('div');
-                dayDiv.innerText = i;
-                if (i === hoje.getDate() && month === hoje.getMonth() && year === hoje.getFullYear()) {
-                    dayDiv.classList.add('today');
-
-                }//]else (i == {{card.data}} ){
-                    //dayDiv.classList.add('agdt');}
-
-                calendarGrid.appendChild(dayDiv);
-            }
         }
+    });
+});
 
-        document.getElementById('prevMonth').onclick = () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); };
-        document.getElementById('nextMonth').onclick = () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); };
+new Sortable(document.getElementById('delete-zone'), {
+    group: 'kanban',
+    onAdd(evt) {
+        if (confirm('Deseja excluir este agendamento?')) {
+            const agId = evt.item.dataset.id;
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = EXCLUIR_URL.replace('{id}', agId);
+            form.innerHTML = `<input type="hidden" name="csrfmiddlewaretoken" value="${getCsrf()}">`;
+            document.body.appendChild(form);
+            form.submit();
+        } else {
+            evt.from.appendChild(evt.item);
+        }
+    }
+});
 
-        renderCalendar();
-    </script>
+// ============================================================
+// 3. POP-UP — abrir ao clicar num card
+// ============================================================
+const overlay      = document.getElementById('modal-overlay');
+const formEditar   = document.getElementById('form-editar');
+const formExcluir  = document.getElementById('form-excluir');
+const modalHorarios = document.getElementById('modal-horarios');
+const editHorario  = document.getElementById('edit-horario');
+const statusModal  = document.getElementById('status-modal-horarios');
+
+let agendamentoAtual = null;
+
+document.querySelectorAll('.sortable-list').forEach(lista => {
+    lista.addEventListener('click', async e => {
+        const card = e.target.closest('.glass-card');
+        if (!card) return;
+        if (cardFoiArrastado) return; // foi arraste, não abre modal
+        await abrirModal(card.dataset.id);
+    });
+});
+
+async function abrirModal(agId) {
+    agendamentoAtual = agId;
+    overlay.hidden = false;
+    document.getElementById('modal-titulo').textContent = 'Carregando…';
+
+    try {
+        const r = await fetch(DETALHE_URL.replace('{id}', agId));
+        const d = await r.json();
+
+        // -- Leitura --
+        document.getElementById('d-nome').textContent     = d.nome_cliente;
+        document.getElementById('d-telefone').textContent = d.telefone || '—';
+        document.getElementById('d-servico').textContent  = d.servico_nome || '—';
+        document.getElementById('d-data').textContent     = d.data_display;
+        document.getElementById('d-hora').textContent     = d.hora;
+        document.getElementById('d-status').textContent   = d.status;
+        document.getElementById('d-obs').textContent      = d.observacao || '—';
+
+        document.getElementById('modal-titulo').innerHTML =
+            `<i class="fas fa-calendar-check"></i> ${d.nome_cliente}`;
+
+        // -- Popula select de serviços --
+        const sel = document.getElementById('edit-servico');
+        sel.innerHTML = '';
+        d.servicos.forEach(s => {
+            const opt = new Option(s.nome, s.id);
+            if (s.id === d.servico_id) opt.selected = true;
+            sel.add(opt);
+        });
+
+        // -- Data: bloqueia passado no browser também --
+        const editDataInput = document.getElementById('edit-data');
+        const hoje = new Date();
+        const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
+        editDataInput.min = hojeStr;
+        editDataInput.value = d.data;
+
+        // -- Horários: preenche botões e garante que o valor atual fique sempre setado --
+        preencherHorariosModal(d.horarios_disponiveis, d.hora);
+        // Seta APÓS preencher para garantir que o hidden nunca fique vazio na abertura
+        if (!editHorario.value) editHorario.value = d.hora;
+
+        // -- Actions --
+        formEditar.action = EDITAR_URL.replace('{id}', agId);
+        formExcluir.action = EXCLUIR_URL.replace('{id}', agId);
+        formExcluir.innerHTML = `<input type="hidden" name="csrfmiddlewaretoken" value="${getCsrf()}">`;
+
+        document.getElementById('edit-obs').value = d.observacao;
+
+    } catch(err) {
+        document.getElementById('modal-titulo').textContent = 'Erro ao carregar.';
+    }
+}
+
+function preencherHorariosModal(horarios, selecionado) {
+    modalHorarios.innerHTML = '';
+    if (!horarios.length) {
+        statusModal.textContent = 'Sem horários disponíveis. O horário atual será mantido ao salvar.';
+        return;
+    }
+    statusModal.textContent = '';
+    horarios.forEach(h => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'horario-btn-modal';
+        btn.textContent = h.valor;
+        btn.disabled = h.ocupado;
+        const estaSelecionado = h.valor === selecionado;
+        btn.setAttribute('aria-pressed', estaSelecionado ? 'true' : 'false');
+        // Seta o hidden imediatamente ao criar o botão selecionado
+        if (estaSelecionado) editHorario.value = h.valor;
+        btn.addEventListener('click', () => {
+            modalHorarios.querySelectorAll('.horario-btn-modal').forEach(b => b.setAttribute('aria-pressed','false'));
+            btn.setAttribute('aria-pressed','true');
+            editHorario.value = h.valor;
+        });
+        modalHorarios.appendChild(btn);
+    });
+}
+
+// Recarrega horários ao trocar data ou serviço no modal
+document.getElementById('edit-data').addEventListener('change', recarregarHorariosModal);
+document.getElementById('edit-servico').addEventListener('change', recarregarHorariosModal);
+
+async function recarregarHorariosModal() {
+    const data = document.getElementById('edit-data').value;
+    if (!data || !agendamentoAtual) return;
+    const servicoId = document.getElementById('edit-servico').value;
+    statusModal.textContent = 'Buscando horários…';
+    modalHorarios.innerHTML = '';
+    editHorario.value = '';
+    try {
+        const params = new URLSearchParams({barbeiro_id: BARBEIRO_ID, data, servico_id: servicoId});
+        const r = await fetch(`${HORARIOS_URL}?${params}`);
+        const json = await r.json();
+        const lista = (json.horarios || []).map(h => ({valor: h, ocupado: false}));
+        preencherHorariosModal(lista, '');
+        if (json.folga || !lista.length) statusModal.textContent = 'Sem horários nesta data.';
+    } catch { statusModal.textContent = 'Erro ao buscar horários.'; }
+}
+
+// ============================================================
+// 4. Fechar modal
+// ============================================================
+function fecharModal() { overlay.hidden = true; agendamentoAtual = null; }
+document.getElementById('modal-fechar').addEventListener('click', fecharModal);
+document.getElementById('btn-cancelar-modal').addEventListener('click', fecharModal);
+overlay.addEventListener('click', e => { if (e.target === overlay) fecharModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
+
+// ============================================================
+// 5. Excluir via modal
+// ============================================================
+document.getElementById('btn-excluir-modal').addEventListener('click', () => {
+    if (confirm('Confirma a exclusão deste agendamento?')) formExcluir.submit();
+});
+
+// ============================================================
+// 6. Calendário dinâmico
+// ============================================================
+const monthDisplay = document.getElementById('monthDisplay');
+const calendarGrid = document.getElementById('calendarGrid');
+let currentDate = new Date();
+const hoje = new Date();
+
+function renderCalendar() {
+    const year  = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const lastDate = new Date(year, month+1, 0).getDate();
+    const months = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+    monthDisplay.textContent = `${months[month]} ${year}`;
+
+    const headers = Array.from(calendarGrid.children).slice(0,7);
+    calendarGrid.innerHTML = '';
+    headers.forEach(h => calendarGrid.appendChild(h));
+    for (let i = 0; i < firstDay; i++) calendarGrid.appendChild(document.createElement('div'));
+    for (let i = 1; i <= lastDate; i++) {
+        const d = document.createElement('div');
+        d.textContent = i;
+        if (i === hoje.getDate() && month === hoje.getMonth() && year === hoje.getFullYear())
+            d.classList.add('today');
+        calendarGrid.appendChild(d);
+    }
+}
+document.getElementById('prevMonth').onclick = () => { currentDate.setMonth(currentDate.getMonth()-1); renderCalendar(); };
+document.getElementById('nextMonth').onclick = () => { currentDate.setMonth(currentDate.getMonth()+1); renderCalendar(); };
+renderCalendar();
+
+// ============================================================
+// Utilitário: pega CSRF token do cookie
+// ============================================================
+function getCsrf() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+</script>
 </body>
 </html>

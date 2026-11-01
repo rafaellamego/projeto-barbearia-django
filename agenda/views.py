@@ -114,6 +114,119 @@ def cancelar_agendamento(request, agendamento_id):
     return redirect('meus_agendamentos')
 
 
+# ==================== AJAX DETALHE — CLIENTE ====================
+def detalhe_agendamento_cliente(request, agendamento_id):
+    """AJAX GET: retorna JSON com detalhes de um agendamento do cliente logado."""
+    usuario_id = request.session.get('usuario_id')
+    if not usuario_id:
+        return JsonResponse({'error': 'Sessão expirada.'}, status=401)
+
+    ag = get_object_or_404(Agendamento, pk=agendamento_id, usuario_id=usuario_id)
+
+    # Horários disponíveis para edição (exclui o horário atual do próprio ag)
+    escala = EscalaBarbeiro.objects.filter(
+        barbeiro=ag.barbeiro, dia_semana=ag.data.weekday()
+    ).first()
+    if escala and escala.ativo:
+        inicio = escala.horario_inicio or datetime.time(8, 0)
+        fim    = escala.horario_fim    or datetime.time(18, 0)
+    else:
+        inicio, fim = datetime.time(8, 0), datetime.time(18, 0)
+
+    ocupados = set(
+        Agendamento.objects.filter(barbeiro=ag.barbeiro, data=ag.data)
+        .exclude(pk=agendamento_id)
+        .values_list('hora', flat=True)
+    )
+    intervalo = ag.servico.duracao_minutos if ag.servico else 30
+    horarios = []
+    loop = datetime.datetime.combine(ag.data, inicio)
+    limite = datetime.datetime.combine(ag.data, fim)
+    while loop <= limite:
+        h = loop.time()
+        horarios.append({'valor': h.strftime('%H:%M'), 'ocupado': h in ocupados})
+        loop += datetime.timedelta(minutes=intervalo)
+
+    # Status legível
+    status_labels = {
+        'pendente':   'Pendente',
+        'confirmado': 'Confirmado',
+        'execucao':   'Em atendimento',
+        'concluido':  'Concluído',
+        'cancelado':  'Cancelado',
+    }
+
+    pode_editar = ag.status in ('pendente', 'confirmado')
+
+    return JsonResponse({
+        'id':            ag.id,
+        'servico_id':    ag.servico_id,
+        'servico_nome':  ag.servico.nome if ag.servico else '—',
+        'servico_preco': str(ag.servico.valor) if ag.servico else '',
+        'barbeiro_id':   ag.barbeiro_id,
+        'barbeiro_nome': ag.barbeiro.nome if ag.barbeiro else '—',
+        'data':          ag.data.strftime('%Y-%m-%d'),
+        'data_display':  ag.data.strftime('%d/%m/%Y'),
+        'hora':          ag.hora.strftime('%H:%M'),
+        'status':        ag.status,
+        'status_label':  status_labels.get(ag.status, ag.status),
+        'observacao':    ag.observacao or '',
+        'pode_editar':   pode_editar,
+        'horarios_disponiveis': horarios,
+        'servicos': list(Servico.objects.values('id', 'nome', 'duracao_minutos')),
+    })
+
+
+# ==================== EDITAR AGENDAMENTO — CLIENTE ====================
+def editar_agendamento_cliente(request, agendamento_id):
+    """POST: cliente pode alterar serviço, data e hora (apenas se pendente ou confirmado)."""
+    usuario_id = request.session.get('usuario_id')
+    if not usuario_id:
+        return redirect('login')
+
+    ag = get_object_or_404(Agendamento, pk=agendamento_id, usuario_id=usuario_id)
+
+    if ag.status not in ('pendente', 'confirmado'):
+        messages.error(request, 'Só é possível editar agendamentos pendentes ou confirmados.')
+        return redirect('meus_agendamentos')
+
+    if request.method != 'POST':
+        return redirect('meus_agendamentos')
+
+    servico_id = request.POST.get('servico_id')
+    data_str   = request.POST.get('data', '')
+    hora_str   = request.POST.get('horario', '')
+    observacao = request.POST.get('observacao', '').strip()
+
+    try:
+        servico = Servico.objects.get(pk=servico_id)
+        data    = datetime.datetime.strptime(data_str, '%Y-%m-%d').date()
+        hora    = datetime.datetime.strptime(hora_str, '%H:%M').time()
+    except (Servico.DoesNotExist, TypeError, ValueError):
+        messages.error(request, 'Dados inválidos. Verifique serviço, data e horário.')
+        return redirect('meus_agendamentos')
+
+    if data < datetime.date.today():
+        messages.error(request, 'Não é possível agendar para uma data passada.')
+        return redirect('meus_agendamentos')
+
+    # Conflito de horário (ignora o próprio agendamento)
+    if Agendamento.objects.filter(
+        barbeiro=ag.barbeiro, data=data, hora=hora
+    ).exclude(pk=ag.pk).exists():
+        messages.error(request, 'Este horário já está ocupado. Escolha outro.')
+        return redirect('meus_agendamentos')
+
+    ag.servico    = servico
+    ag.data       = data
+    ag.hora       = hora
+    ag.observacao = observacao or None
+    ag.save()
+
+    messages.success(request, 'Agendamento atualizado com sucesso!')
+    return redirect('meus_agendamentos')
+
+
 # ==================== BUSCAR BARBEIROS DISPONÍVEIS (AJAX) ====================
 def get_barbeiros_disponiveis(request):
     """Retorna lista de barbeiros que atendem na data informada, considerando a EscalaBarbeiro."""
@@ -145,6 +258,10 @@ def get_barbeiros_disponiveis(request):
 
 # ==================== BUSCAR HORÁRIOS (AJAX) ====================
 def get_horarios_disponiveis(request):
+    # Aceita sessão de cliente OU de barbeiro (para o modal de edição)
+    if 'usuario_id' not in request.session and 'barbeiro_id' not in request.session:
+        return JsonResponse({'error': 'Sessão expirada.'}, status=401)
+
     barbeiro_id = request.GET.get('barbeiro_id')
     data_str = request.GET.get('data')
     servico_id = request.GET.get('servico_id')  # usado para calcular o intervalo entre slots
@@ -411,3 +528,225 @@ def logout_cliente(request):
     request.session.flush()
     messages.success(request, "Você saiu do sistema!")
     return redirect('login')
+
+
+# ==================== CRUD DE AGENDAMENTOS PELO BARBEIRO ====================
+
+def _barbeiro_logado_ou_401(request):
+    """Retorna o Barbeiro logado ou None se não autenticado."""
+    barbeiro_id = request.session.get('barbeiro_id')
+    if not barbeiro_id:
+        return None
+    try:
+        return Barbeiro.objects.get(pk=barbeiro_id)
+    except Barbeiro.DoesNotExist:
+        return None
+
+
+def novo_agendamento_barbeiro(request):
+    """GET: exibe formulário. POST: salva novo agendamento."""
+    barbeiro = _barbeiro_logado_ou_401(request)
+    if not barbeiro:
+        return redirect('login')
+
+    servicos = Servico.objects.all().order_by('nome')
+    hoje = timezone.localdate()
+    ctx = {
+        'barbeiro': barbeiro,
+        'servicos': servicos,
+        'data_minima': hoje.isoformat(),
+        'data_maxima': (hoje + datetime.timedelta(days=30)).isoformat(),
+    }
+
+    if request.method != 'POST':
+        return render(request, 'agenda/novo_agendamento_barbeiro.html', ctx)
+
+    # -- Leitura dos dados do formulário --
+    tipo_cliente = request.POST.get('tipo_cliente', 'avulso')
+    nome_avulso = request.POST.get('nome_avulso', '').strip()
+    telefone_busca = re.sub(r'\D', '', request.POST.get('telefone_cliente', ''))
+    servico_id = request.POST.get('servico_id')
+    data_str = request.POST.get('data', '')
+    hora_str = request.POST.get('horario', '')
+    observacao = request.POST.get('observacao', '').strip()
+
+    # -- Resolve o cliente --
+    usuario = None
+    if tipo_cliente == 'cadastrado':
+        try:
+            usuario = Usuario.objects.get(telefone=telefone_busca)
+        except Usuario.DoesNotExist:
+            messages.error(request, 'Cliente não encontrado. Verifique o telefone ou use o campo de nome avulso.')
+            return render(request, 'agenda/novo_agendamento_barbeiro.html', ctx)
+        nome_avulso = None
+    else:
+        if not nome_avulso:
+            messages.error(request, 'Informe o nome do cliente.')
+            return render(request, 'agenda/novo_agendamento_barbeiro.html', ctx)
+
+    # -- Valida serviço, data e hora --
+    try:
+        servico = Servico.objects.get(pk=servico_id)
+        data = datetime.datetime.strptime(data_str, '%Y-%m-%d').date()
+        hora = datetime.datetime.strptime(hora_str, '%H:%M').time()
+    except (Servico.DoesNotExist, TypeError, ValueError):
+        messages.error(request, 'Selecione um serviço, data e horário válidos.')
+        return render(request, 'agenda/novo_agendamento_barbeiro.html', ctx)
+
+    # Bloqueia datas no passado
+    if data < timezone.localdate():
+        messages.error(request, 'Não é possível agendar para uma data que já passou.')
+        return render(request, 'agenda/novo_agendamento_barbeiro.html', ctx)
+
+    # -- Valida escala do barbeiro --
+    dia_semana = data.weekday()
+    escala = EscalaBarbeiro.objects.filter(barbeiro=barbeiro, dia_semana=dia_semana).first()
+    if escala and not escala.ativo:
+        messages.error(request, 'Você não atende neste dia conforme sua escala.')
+        return render(request, 'agenda/novo_agendamento_barbeiro.html', ctx)
+    if not escala and dia_semana == 6:
+        messages.error(request, 'Sem escala cadastrada, o padrão é folga no domingo.')
+        return render(request, 'agenda/novo_agendamento_barbeiro.html', ctx)
+
+    # -- Valida conflito de horário --
+    if Agendamento.objects.filter(barbeiro=barbeiro, data=data, hora=hora).exists():
+        messages.error(request, 'Este horário já está ocupado na sua agenda.')
+        return render(request, 'agenda/novo_agendamento_barbeiro.html', ctx)
+
+    Agendamento.objects.create(
+        usuario=usuario,
+        nome_avulso=nome_avulso,
+        barbeiro=barbeiro,
+        servico=servico,
+        data=data,
+        hora=hora,
+        observacao=observacao or None,
+        status='pendente',
+    )
+    messages.success(request, 'Agendamento criado com sucesso!')
+    return redirect('home_barbeiro')
+
+
+def buscar_cliente_por_telefone(request):
+    """AJAX: retorna dados do cliente pelo telefone para preencher o formulário."""
+    barbeiro = _barbeiro_logado_ou_401(request)
+    if not barbeiro:
+        return JsonResponse({'error': 'Sessão expirada.'}, status=401)
+
+    telefone = re.sub(r'\D', '', request.GET.get('telefone', ''))
+    if len(telefone) < 10:
+        return JsonResponse({'encontrado': False})
+
+    try:
+        usuario = Usuario.objects.get(telefone=telefone)
+        return JsonResponse({'encontrado': True, 'nome': usuario.nome, 'id': usuario.id})
+    except Usuario.DoesNotExist:
+        return JsonResponse({'encontrado': False})
+
+
+def detalhe_agendamento_barbeiro(request, agendamento_id):
+    """AJAX GET: retorna JSON com os detalhes de um agendamento para o pop-up."""
+    barbeiro = _barbeiro_logado_ou_401(request)
+    if not barbeiro:
+        return JsonResponse({'error': 'Sessão expirada.'}, status=401)
+
+    ag = get_object_or_404(Agendamento, pk=agendamento_id, barbeiro=barbeiro)
+
+    # Horários disponíveis para o dia (para o select de edição no pop-up)
+    escala = EscalaBarbeiro.objects.filter(
+        barbeiro=barbeiro, dia_semana=ag.data.weekday()
+    ).first()
+    if escala:
+        inicio = escala.horario_inicio or datetime.time(8, 0)
+        fim = escala.horario_fim or datetime.time(18, 0)
+    else:
+        inicio, fim = datetime.time(8, 0), datetime.time(18, 0)
+
+    ocupados = set(
+        Agendamento.objects.filter(barbeiro=barbeiro, data=ag.data)
+        .exclude(pk=agendamento_id)
+        .values_list('hora', flat=True)
+    )
+    horarios = []
+    loop = datetime.datetime.combine(ag.data, inicio)
+    limite = datetime.datetime.combine(ag.data, fim)
+    intervalo = ag.servico.duracao_minutos if ag.servico else 30
+    while loop <= limite:
+        h = loop.time()
+        horarios.append({'valor': h.strftime('%H:%M'), 'ocupado': h in ocupados})
+        loop += datetime.timedelta(minutes=intervalo)
+
+    return JsonResponse({
+        'id': ag.id,
+        'nome_cliente': ag.nome_cliente(),
+        'telefone': ag.usuario.telefone if ag.usuario else '',
+        'servico_id': ag.servico_id,
+        'servico_nome': ag.servico.nome if ag.servico else '',
+        'data': ag.data.strftime('%Y-%m-%d'),
+        'data_display': ag.data.strftime('%d/%m/%Y'),
+        'hora': ag.hora.strftime('%H:%M'),
+        'status': ag.status,
+        'observacao': ag.observacao or '',
+        'horarios_disponiveis': horarios,
+        'servicos': list(Servico.objects.values('id', 'nome', 'duracao_minutos')),
+    })
+
+
+def editar_agendamento_barbeiro(request, agendamento_id):
+    """POST: atualiza serviço, data, hora e observação de um agendamento."""
+    barbeiro = _barbeiro_logado_ou_401(request)
+    if not barbeiro:
+        return JsonResponse({'error': 'Sessão expirada.'}, status=401)
+
+    ag = get_object_or_404(Agendamento, pk=agendamento_id, barbeiro=barbeiro)
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método não permitido.'}, status=405)
+
+    servico_id = request.POST.get('servico_id')
+    data_str = request.POST.get('data', '')
+    hora_str = request.POST.get('horario', '')
+    observacao = request.POST.get('observacao', '').strip()
+
+    try:
+        servico = Servico.objects.get(pk=servico_id)
+        data = datetime.datetime.strptime(data_str, '%Y-%m-%d').date()
+        hora = datetime.datetime.strptime(hora_str, '%H:%M').time()
+    except (Servico.DoesNotExist, TypeError, ValueError):
+        messages.error(request, 'Dados inválidos. Verifique serviço, data e horário.')
+        return redirect('home_barbeiro')
+
+    # Bloqueia datas no passado
+    if data < timezone.localdate():
+        messages.error(request, 'Não é possível agendar para uma data que já passou.')
+        return redirect('home_barbeiro')
+
+    # Conflito de horário (ignora o próprio agendamento)
+    if Agendamento.objects.filter(barbeiro=barbeiro, data=data, hora=hora).exclude(pk=ag.pk).exists():
+        messages.error(request, 'Você já tem um agendamento neste horário.')
+        return redirect('home_barbeiro')
+
+    ag.servico = servico
+    ag.data = data
+    ag.hora = hora
+    ag.observacao = observacao or None
+    ag.save()
+
+    messages.success(request, 'Agendamento atualizado com sucesso!')
+    return redirect('home_barbeiro')
+
+
+def excluir_agendamento_barbeiro(request, agendamento_id):
+    """POST: exclui um agendamento pertencente ao barbeiro logado."""
+    barbeiro = _barbeiro_logado_ou_401(request)
+    if not barbeiro:
+        return redirect('login')
+
+    ag = get_object_or_404(Agendamento, pk=agendamento_id, barbeiro=barbeiro)
+
+    if request.method != 'POST':
+        return redirect('home_barbeiro')
+
+    ag.delete()
+    messages.success(request, 'Agendamento excluído.')
+    return redirect('home_barbeiro')

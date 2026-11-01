@@ -18,9 +18,18 @@ urlpatterns = [
     path('get-barbeiros/', views.get_barbeiros_disponiveis, name='get_barbeiros'),
     path('get-horarios/', views.get_horarios_disponiveis, name='get_horarios'),
     path('cancelar-agendamento/<int:agendamento_id>/', views.cancelar_agendamento, name='cancelar_agendamento'),
+    path('agendamento/<int:agendamento_id>/detalhe/', views.detalhe_agendamento_cliente, name='detalhe_agendamento_cliente'),
+    path('agendamento/<int:agendamento_id>/editar/', views.editar_agendamento_cliente, name='editar_agendamento_cliente'),
 
     # --- ROTAS DO BARBEIRO ---
     path('gerencia/', views.gerencia, name='gerencia_barbeiro'),
     path('home/barbeiro/', views.home_barbeiro, name='home_barbeiro'),
     path('atualizar_status_agendamento/', views.atualizar_status_agendamento, name='atualizar_status_agendamento'),
+
+    # --- CRUD DE AGENDAMENTOS PELO BARBEIRO ---
+    path('barbeiro/novo-agendamento/', views.novo_agendamento_barbeiro, name='novo_agendamento_barbeiro'),
+    path('barbeiro/buscar-cliente/', views.buscar_cliente_por_telefone, name='buscar_cliente_barbeiro'),
+    path('barbeiro/agendamento/<int:agendamento_id>/detalhe/', views.detalhe_agendamento_barbeiro, name='detalhe_agendamento_barbeiro'),
+    path('barbeiro/agendamento/<int:agendamento_id>/editar/', views.editar_agendamento_barbeiro, name='editar_agendamento_barbeiro'),
+    path('barbeiro/agendamento/<int:agendamento_id>/excluir/', views.excluir_agendamento_barbeiro, name='excluir_agendamento_barbeiro'),
 ]

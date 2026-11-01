@@ -4,142 +4,341 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - Agenda Aí</title>
+    <title>Home — Agenda Aí</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        html {
-            background-color: #0a0519;
+        :root {
+            --purple-bright: #a855f7;
+            --purple-glass:  rgba(168,85,247,0.18);
+            --border-glass:  rgba(255,255,255,0.12);
         }
+
+        html { background-color: #0a0519; }
         body {
-            background: linear-gradient(rgba(25,10,40,0.75), rgba(10,5,25,0.85)), url('{% static "fundo_barbearia.png" %}') no-repeat center center fixed;
+            background: linear-gradient(rgba(25,10,40,0.78), rgba(10,5,25,0.88)),
+                        url('{% static "fundo_barbearia.png" %}') no-repeat center center fixed;
             background-size: cover;
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
             min-height: 100vh;
             margin: 0;
             color: white;
-            padding-bottom: 75px;
+            display: flex;
+            flex-direction: column;
         }
 
+        /* ══ TOP BAR ══ */
         .top-bar {
-            background: rgba(40,20,60,0.3);
-            backdrop-filter: blur(25px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 15px 35px;
+            background: rgba(15,8,28,0.75);
+            backdrop-filter: blur(28px);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 0 36px;
+            height: 64px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 200;
         }
 
-        .top-bar a {
-            color: white;
+        .top-bar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             text-decoration: none;
-            margin-left: 20px;
-            opacity: 0.7;
+        }
+        .top-bar-brand img { height: 36px; }
+        .top-bar-brand span {
+            font-size: .75rem;
+            letter-spacing: .15em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
         }
 
-        .top-bar a:hover {
-            opacity: 1;
+        .top-nav {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            color: rgba(255,255,255,0.65);
+            text-decoration: none;
+            font-size: .88rem;
+            font-weight: 500;
+            transition: background .2s, color .2s;
+        }
+        .nav-link:hover {
+            background: rgba(255,255,255,0.07);
+            color: white;
+        }
+        .nav-link.active {
+            background: var(--purple-glass);
+            color: white;
+            border: 1px solid rgba(168,85,247,0.3);
+        }
+        .nav-link i { font-size: .9rem; color: var(--purple-bright); }
+
+        .nav-sair {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            color: rgba(255,255,255,0.4);
+            text-decoration: none;
+            font-size: .88rem;
+            font-weight: 500;
+            transition: background .2s, color .2s;
+            margin-left: 6px;
+            border-left: 1px solid var(--border-glass);
+            padding-left: 22px;
+        }
+        .nav-sair:hover { color: rgba(255,255,255,0.75); }
+
+        /* ══ CONTEÚDO PRINCIPAL ══ */
+        .page-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 24px 100px;
         }
 
-        .container {
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 0 20px;
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 25px;
-            padding: 40px;
+        /* ══ HERO ══ */
+        .hero {
             text-align: center;
+            margin-bottom: 48px;
         }
-
-        .card i {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            color: #764ba2;
-        }
-
-        .card h1 {
+        .hero-icon {
+            width: 72px; height: 72px;
+            border-radius: 22px;
+            background: var(--purple-glass);
+            border: 1px solid rgba(168,85,247,0.35);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             font-size: 2rem;
-            margin-bottom: 10px;
+            color: var(--purple-bright);
+            margin-bottom: 20px;
+            box-shadow: 0 0 32px rgba(168,85,247,0.25);
+        }
+        .hero h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin: 0 0 8px;
+            background: linear-gradient(120deg, #fff 40%, var(--purple-bright));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero p {
+            color: rgba(255,255,255,0.5);
+            font-size: 1rem;
+            margin: 0;
         }
 
-        .btn-agendar {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px 35px;
-            border-radius: 50px;
+        /* ══ CARDS DE AÇÃO ══ */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            width: 100%;
+            max-width: 740px;
+        }
+
+        .action-card {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 28px 24px;
             text-decoration: none;
-            font-weight: bold;
-            margin-top: 20px;
-            transition: 0.3s;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 14px;
+            transition: transform .22s, box-shadow .22s, border-color .22s, background .22s;
+            position: relative;
+            overflow: hidden;
+        }
+        .action-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            opacity: 0;
+            transition: opacity .25s;
+        }
+        .action-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.35);
+            border-color: rgba(168,85,247,0.45);
+            background: rgba(255,255,255,0.07);
+        }
+        .action-card:hover::before { opacity: 1; }
+
+        /* Card destaque — agendar */
+        .action-card.primary {
+            background: linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.25));
+            border-color: rgba(168,85,247,0.4);
+        }
+        .action-card.primary:hover {
+            background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.35));
+            box-shadow: 0 12px 36px rgba(168,85,247,0.25);
         }
 
-        .btn-agendar:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(118,75,162,0.4);
+        .action-icon {
+            width: 48px; height: 48px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem;
+        }
+        .action-card.primary .action-icon {
+            background: rgba(168,85,247,0.3);
+            color: var(--purple-bright);
+        }
+        .action-card:not(.primary) .action-icon {
+            background: rgba(255,255,255,0.07);
+            color: rgba(255,255,255,0.7);
         }
 
+        .action-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .action-desc {
+            font-size: .8rem;
+            color: rgba(255,255,255,0.45);
+            margin: 0;
+            line-height: 1.4;
+        }
+        .action-arrow {
+            margin-top: auto;
+            font-size: .75rem;
+            color: var(--purple-bright);
+            opacity: 0;
+            transform: translateX(-4px);
+            transition: opacity .2s, transform .2s;
+        }
+        .action-card:hover .action-arrow {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* ══ RODAPÉ ══ */
         .footer-social {
             position: fixed;
-            bottom: 0;
-            left: 0;
+            bottom: 0; left: 0;
             width: 100%;
-            background: rgba(10, 5, 20, 0.95);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 18px 0;
+            background: rgba(10,5,20,0.92);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 14px 0;
             display: flex;
             justify-content: center;
-            gap: 50px;
-            z-index: 1000;
+            gap: 48px;
+            z-index: 100;
         }
-
         .social-item {
-            color: white;
+            color: rgba(255,255,255,0.55);
             text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 12px;
-            opacity: 0.8;
+            gap: 9px;
+            font-size: .85rem;
+            transition: color .2s;
         }
+        .social-item i { color: var(--purple-bright); }
+        .social-item:hover { color: white; }
 
-        .social-item:hover {
-            opacity: 1;
+        /* ══ RESPONSIVO ══ */
+        @media (max-width: 600px) {
+            .top-bar { padding: 0 18px; }
+            .top-bar-brand span { display: none; }
+            .nav-link span { display: none; }
+            .hero h1 { font-size: 1.7rem; }
+            .action-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    {% include 'agenda/accessibility_bar.html' %}
+{% include 'agenda/accessibility_bar.html' %}
 
-    <div class="top-bar">
-        <span>💈 Agenda Aí - Área do Cliente</span>
-        <div>
-            <a href="{% url 'meus_agendamentos' %}"><i class="fas fa-calendar-alt"></i> Meus Agendamentos</a>
-            <a href="{% url "agendamento" %}"><i class="fas fa-calendar-plus"></i> Novo Agendamento</a>
-            <a href="{% url 'logout_cliente' %}"><i class="fas fa-sign-out-alt"></i> Sair</a>
-        </div>
+<!-- ══ TOP BAR ══ -->
+<header class="top-bar">
+    <a class="top-bar-brand" href="{% url 'home_cliente' %}">
+        <img src="{% static 'logo.png' %}" alt="Agenda Aí">
+        <span>Área do Cliente</span>
+    </a>
+    <nav class="top-nav">
+        <a class="nav-link active" href="{% url 'home_cliente' %}">
+            <i class="fas fa-home"></i><span>Home</span>
+        </a>
+        <a class="nav-link" href="{% url 'meus_agendamentos' %}">
+            <i class="fas fa-calendar-alt"></i><span>Meus Agendamentos</span>
+        </a>
+        <a class="nav-link" href="{% url 'agendamento' %}">
+            <i class="fas fa-calendar-plus"></i><span>Novo Agendamento</span>
+        </a>
+        <a class="nav-sair" href="{% url 'logout_cliente' %}">
+            <i class="fas fa-sign-out-alt"></i> Sair
+        </a>
+    </nav>
+</header>
+
+<!-- ══ CONTEÚDO ══ -->
+<div class="page-body">
+
+    {% include 'agenda/_messages.html' %}
+
+    <!-- Hero -->
+    <div class="hero">
+        <div class="hero-icon"><i class="fas fa-cut"></i></div>
+        <h1>Bem-vindo, {{ nome_cliente }}!</h1>
+        <p>Gerencie seus horários de forma fácil e rápida.</p>
     </div>
 
-    <div class="container">
-        <div class="card">
-            <i class="fas fa-cut"></i>
-            <h1>Bem-vindo, {{ nome_cliente }}!</h1>
-            <p>Gerencie seus horários de forma fácil e rápida.</p>
-            
-            <a href="{% url "agendamento" %}" class="btn-agendar">
-                <i class="fas fa-calendar-check"></i> Agendar Horário
-            </a>
-        </div>
-    </div>
+    <!-- Cards de ação -->
+    <div class="action-grid">
 
-    <div class="footer-social">
-        <a href="{% url "agendamento" %}" class="social-item"><i class="fab fa-instagram"></i> @AgendaAi</a>
-        <a href="{% url "agendamento" %}" class="social-item"><i class="fab fa-whatsapp"></i> (11) 99999-9999</a>
+        <a href="{% url 'agendamento' %}" class="action-card primary">
+            <div class="action-icon"><i class="fas fa-calendar-check"></i></div>
+            <div>
+                <p class="action-title">Agendar Horário</p>
+                <p class="action-desc">Escolha serviço, barbeiro, data e horário em poucos passos.</p>
+            </div>
+            <span class="action-arrow"><i class="fas fa-arrow-right"></i> Agendar agora</span>
+        </a>
+
+        <a href="{% url 'meus_agendamentos' %}" class="action-card">
+            <div class="action-icon"><i class="fas fa-list-alt"></i></div>
+            <div>
+                <p class="action-title">Meus Agendamentos</p>
+                <p class="action-desc">Veja, edite ou cancele seus horários marcados.</p>
+            </div>
+            <span class="action-arrow"><i class="fas fa-arrow-right"></i> Ver agendamentos</span>
+        </a>
+
     </div>
+</div>
+
+<!-- ══ RODAPÉ ══ -->
+<footer class="footer-social">
+    <a href="#" class="social-item">
+        <i class="fab fa-instagram"></i> @AgendaAi
+    </a>
+    <a href="#" class="social-item">
+        <i class="fab fa-whatsapp"></i> (11) 99999-9999
+    </a>
+</footer>
+
 </body>
 </html>

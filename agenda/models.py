@@ -49,7 +49,8 @@ class Agendamento(models.Model):
     ]
     
     # Ligações com outras tabelas (Foreign Keys = Chaves Estrangeiras)
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)  # Qual cliente agendou
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, null=True, blank=True)  # Qual cliente agendou (null para clientes avulsos)
+    nome_avulso = models.CharField(max_length=150, blank=True, null=True)  # Nome para clientes sem cadastro
     barbeiro = models.ForeignKey(Barbeiro, on_delete=models.CASCADE, null=True, blank=True)  # Qual barbeiro vai atender
     servico = models.ForeignKey(Servico, on_delete=models.CASCADE, null=True, blank=True)  # Qual serviço foi escolhido
     
@@ -121,11 +122,17 @@ class Agendamento(models.Model):
 
 
     
+    def nome_cliente(self):
+        """Retorna o nome do cliente, seja cadastrado ou avulso."""
+        if self.usuario:
+            return self.usuario.nome
+        return self.nome_avulso or 'Cliente avulso'
+
     def __str__(self):
         """Como o agendamento aparece no admin/shell"""
         servico_nome = self.servico.nome if self.servico else "Sem serviço"
         barbeiro_nome = self.barbeiro.nome if self.barbeiro else "Sem barbeiro"
-        return f"{self.usuario.nome} - {servico_nome} com {barbeiro_nome} - {self.data} {self.hora} ({self.status})"
+        return f"{self.nome_cliente()} - {servico_nome} com {barbeiro_nome} - {self.data} {self.hora} ({self.status})"
 
 # Escala Barbeiro
 class EscalaBarbeiro(models.Model):

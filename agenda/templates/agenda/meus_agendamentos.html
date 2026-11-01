@@ -4,268 +4,616 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meus Agendamentos - Agenda Aí</title>
+    <title>Meus Agendamentos — Agenda Aí</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        html {
-            background-color: #0a0519;
+        :root {
+            --purple-bright: #a855f7;
+            --purple-glass:  rgba(168,85,247,0.18);
+            --border-glass:  rgba(255,255,255,0.12);
         }
+
+        html { background-color: #0a0519; }
         body {
-            background: linear-gradient(rgba(25,10,40,0.75), rgba(10,5,25,0.85)), url('{% static "fundo_barbearia.png" %}') no-repeat center center fixed;
+            background: linear-gradient(rgba(25,10,40,0.78), rgba(10,5,25,0.88)),
+                        url('{% static "fundo_barbearia.png" %}') no-repeat center center fixed;
             background-size: cover;
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
             min-height: 100vh;
             margin: 0;
             color: white;
-            padding-bottom: 75px;
+            padding-bottom: 80px;
         }
 
+        /* ══ TOP BAR ══ */
         .top-bar {
-            background: rgba(40,20,60,0.3);
-            backdrop-filter: blur(25px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 15px 35px;
+            background: rgba(15,8,28,0.75);
+            backdrop-filter: blur(28px);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 0 36px;
+            height: 64px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+        }
+        .top-bar-brand {
+            display: flex; align-items: center; gap: 10px; text-decoration: none;
+        }
+        .top-bar-brand img { height: 36px; }
+        .top-bar-brand span {
+            font-size: .75rem; letter-spacing: .15em; text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+        }
+        .top-nav { display: flex; align-items: center; gap: 6px; }
+        .nav-link {
+            display: flex; align-items: center; gap: 7px;
+            padding: 8px 16px; border-radius: 10px;
+            color: rgba(255,255,255,0.65); text-decoration: none;
+            font-size: .88rem; font-weight: 500;
+            transition: background .2s, color .2s;
+        }
+        .nav-link:hover  { background: rgba(255,255,255,0.07); color: white; }
+        .nav-link.active { background: var(--purple-glass); color: white; border: 1px solid rgba(168,85,247,0.3); }
+        .nav-link i      { font-size: .9rem; color: var(--purple-bright); }
+        .nav-sair {
+            display: flex; align-items: center; gap: 7px;
+            padding: 8px 22px; border-radius: 10px;
+            color: rgba(255,255,255,0.4); text-decoration: none;
+            font-size: .88rem; font-weight: 500;
+            transition: color .2s;
+            margin-left: 6px; border-left: 1px solid var(--border-glass);
+        }
+        .nav-sair:hover { color: rgba(255,255,255,0.75); }
+
+        /* ══ CONTAINER ══ */
+        .container { max-width: 980px; margin: 44px auto; padding: 0 22px; }
+
+        /* ══ PAGE HEADER ══ */
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 32px; flex-wrap: wrap; gap: 14px;
+        }
+        .page-header h1 {
+            font-size: 1.5rem; font-weight: 800; margin: 0;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .page-header h1 i { color: var(--purple-bright); font-size: 1.3rem; }
+
+        .btn-novo {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: linear-gradient(135deg,#667eea,#764ba2);
+            color: white; padding: 10px 22px; border-radius: 50px;
+            text-decoration: none; font-weight: 700; font-size: .88rem;
+            transition: .2s;
+        }
+        .btn-novo:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(118,75,162,0.4); }
+
+        /* ══ CARDS DE AGENDAMENTO ══ */
+        .ag-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
         }
 
-        .top-bar a {
-            color: white;
-            text-decoration: none;
-            margin-left: 20px;
-            opacity: 0.7;
-        }
-
-        .top-bar a:hover {
-            opacity: 1;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 50px auto;
-            padding: 0 20px;
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 25px;
-            padding: 40px;
-        }
-
-        .card h2 {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .card h2 i {
-            color: #764ba2;
-            margin-right: 10px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        th {
-            color: #764ba2;
-            font-weight: bold;
-        }
-
-        .badge {
-            background: #764ba2;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-        }
-
-        .badge.pendente {
-            background: #ff9800;
-        }
-
-        .badge.confirmado {
-            background: #4caf50;
-        }
-
-        .badge.concluido {
-            background: #5535cc; /* Laranja */
-        }
-
-        .badge.cancelado {
-            background: #f44336;
-        }
-
-        .sem-agendamentos {
-            text-align: center;
-            padding: 40px;
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px 35px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: bold;
-            display: inline-block;
-            transition: 0.3s;
-            border: none;
+        .ag-card {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--border-glass);
+            border-radius: 18px;
+            padding: 20px;
             cursor: pointer;
+            transition: transform .2s, box-shadow .2s, border-color .2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .ag-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border-color: rgba(168,85,247,0.4);
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(118,75,162,0.4);
+        /* Borda colorida esquerda por status */
+        .ag-card::before {
+            content: '';
+            position: absolute; left: 0; top: 0; bottom: 0;
+            width: 4px; border-radius: 4px 0 0 4px;
+        }
+        .ag-card.status-pendente::before   { background: #f59e0b; }
+        .ag-card.status-confirmado::before { background: #3b82f6; }
+        .ag-card.status-execucao::before   { background: #eab308; }
+        .ag-card.status-concluido::before  { background: #10b981; }
+        .ag-card.status-cancelado::before  { background: #ef4444; }
+
+        .ag-card-top {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 14px;
+        }
+        .ag-servico {
+            font-size: 1rem; font-weight: 700; margin: 0;
+        }
+        .ag-badge {
+            font-size: .7rem; font-weight: 700; padding: 4px 10px;
+            border-radius: 20px; white-space: nowrap;
+        }
+        .badge-pendente   { background: rgba(245,158,11,0.2);  color: #fcd34d; border: 1px solid rgba(245,158,11,0.4); }
+        .badge-confirmado { background: rgba(59,130,246,0.2);  color: #93c5fd; border: 1px solid rgba(59,130,246,0.4); }
+        .badge-execucao   { background: rgba(234,179,8,0.2);   color: #fde68a; border: 1px solid rgba(234,179,8,0.4); }
+        .badge-concluido  { background: rgba(16,185,129,0.2);  color: #6ee7b7; border: 1px solid rgba(16,185,129,0.4); }
+        .badge-cancelado  { background: rgba(239,68,68,0.2);   color: #fca5a5; border: 1px solid rgba(239,68,68,0.4); }
+
+        .ag-info { display: flex; flex-direction: column; gap: 6px; }
+        .ag-info-row {
+            display: flex; align-items: center; gap: 8px;
+            font-size: .83rem; color: rgba(255,255,255,0.6);
+        }
+        .ag-info-row i { color: var(--purple-bright); width: 14px; text-align: center; font-size: .8rem; }
+
+        .ag-footer {
+            margin-top: 16px; padding-top: 12px;
+            border-top: 1px solid var(--border-glass);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .ag-preco {
+            font-size: 1rem; font-weight: 700; color: var(--purple-bright);
+        }
+        .ag-hint {
+            font-size: .72rem; color: rgba(255,255,255,0.3);
+            display: flex; align-items: center; gap: 4px;
         }
 
+        /* ══ VAZIO ══ */
+        .empty-state {
+            text-align: center; padding: 64px 20px;
+            color: rgba(255,255,255,0.4);
+        }
+        .empty-state i { font-size: 3rem; color: var(--purple-bright); margin-bottom: 16px; display: block; }
+        .empty-state p { font-size: 1rem; margin-bottom: 24px; }
+
+        /* ══ MODAL ══ */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(5px);
+            z-index: 500;
+            display: flex; align-items: center; justify-content: center;
+            padding: 1rem;
+        }
+        .modal-overlay[hidden] { display: none; }
+
+        .modal {
+            background: rgba(18,8,32,0.98);
+            border: 1px solid rgba(168,85,247,0.35);
+            border-radius: 20px;
+            padding: 28px;
+            width: 100%; max-width: 480px;
+            max-height: 90vh; overflow-y: auto;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute; top: 1rem; right: 1rem;
+            background: rgba(255,255,255,0.08); border: none; color: white;
+            width: 32px; height: 32px; border-radius: 50%;
+            cursor: pointer; font-size: .9rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: background .2s;
+        }
+        .modal-close:hover { background: rgba(255,255,255,0.16); }
+
+        .modal-title {
+            font-size: 1.15rem; font-weight: 700; margin: 0 0 20px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .modal-title i { color: var(--purple-bright); }
+
+        /* Seção de leitura */
+        .detail-row {
+            display: flex; gap: 8px; margin-bottom: 8px; font-size: .88rem;
+        }
+        .detail-label { opacity: .5; min-width: 90px; }
+        .detail-val   { font-weight: 600; }
+
+        .modal-divider { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 20px 0; }
+
+        /* Seção de edição */
+        .modal label {
+            display: block; margin-bottom: 5px;
+            font-size: .82rem; font-weight: 700; opacity: .75;
+        }
+        .modal select, .modal input[type="date"], .modal textarea {
+            width: 100%; padding: 10px 13px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px; color: white; font: inherit;
+            box-sizing: border-box; margin-bottom: 14px;
+        }
+        .modal select option { background: #1a0a2e; }
+        .modal textarea { resize: vertical; min-height: 56px; }
+        .modal select:focus, .modal input:focus, .modal textarea:focus {
+            outline: none; border-color: var(--purple-bright);
+        }
+
+        .horarios-grid-modal {
+            display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px;
+        }
+        .horario-btn-modal {
+            background: rgba(255,255,255,0.07); border: 1px solid var(--border-glass);
+            color: white; padding: 7px 13px; border-radius: 8px;
+            cursor: pointer; font: inherit; font-size: .8rem; transition: .15s;
+        }
+        .horario-btn-modal:hover { background: var(--purple-glass); }
+        .horario-btn-modal[aria-pressed="true"] { background: var(--purple-bright); border-color: white; font-weight: 700; }
+        .horario-btn-modal:disabled { opacity: .3; cursor: not-allowed; }
+
+        .status-msg-modal { font-size: .78rem; opacity: .6; margin-bottom: 8px; min-height: 1rem; }
+
+        .modal-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+        .btn-modal {
+            padding: 9px 20px; border-radius: 50px; border: none;
+            cursor: pointer; font: inherit; font-weight: 700;
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: .88rem; transition: opacity .2s;
+        }
+        .btn-modal:hover { opacity: .85; }
+        .btn-save   { background: linear-gradient(135deg,#667eea,#764ba2); color: white; }
+        .btn-delete { background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #fca5a5; }
+        .btn-close  { background: rgba(255,255,255,0.08); color: white; }
+
+        .edit-disabled-notice {
+            background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.3);
+            border-radius: 10px; padding: 10px 14px;
+            font-size: .82rem; color: #fde68a;
+            display: flex; align-items: center; gap: 8px;
+            margin-top: 4px;
+        }
+
+        /* ══ RODAPÉ ══ */
         .footer-social {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(10, 5, 20, 0.95);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 18px 0;
-            display: flex;
-            justify-content: center;
-            gap: 50px;
-            z-index: 1000;
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(10,5,20,0.92); backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 14px 0; display: flex; justify-content: center; gap: 48px; z-index: 100;
         }
-
         .social-item {
-            color: white;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            opacity: 0.8;
+            color: rgba(255,255,255,0.55); text-decoration: none;
+            display: flex; align-items: center; gap: 9px;
+            font-size: .85rem; transition: color .2s;
         }
+        .social-item i { color: var(--purple-bright); }
+        .social-item:hover { color: white; }
 
-        .social-item:hover {
-            opacity: 1;
+        /* ══ RESPONSIVO ══ */
+        @media (max-width: 600px) {
+            .top-bar { padding: 0 18px; }
+            .top-bar-brand span, .nav-link span { display: none; }
+            .ag-grid { grid-template-columns: 1fr; }
+            .modal { padding: 20px; }
         }
-
-        @media (max-width: 768px) {
-            th, td {
-                padding: 8px;
-                font-size: 0.9rem;
-            }
-            .card {
-                padding: 20px;
-            }
-        }
-
-        .btn-cancelar {
-            background: rgba(244, 67, 54, 0.2);
-            color: #f44336;
-            border: 1px solid #f44336;
-            padding: 6px 12px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 0.85rem;
-            transition: 0.3s;
-        }
-
-        .btn-cancelar:hover {
-            background: #f44336;
-            color: white;
-        }
-
     </style>
 </head>
 <body>
-    <div class="top-bar">
-        <span>💈 Agenda Aí - Meus Agendamentos</span>
-        <div>
-            <a href="{% url 'home_cliente' %}"><i class="fas fa-home"></i> Home</a>
-            <a href="{% url 'agendamento' %}"><i class="fas fa-calendar-plus"></i> Novo Agendamento</a>
-            <a href="{% url 'logout_cliente' %}"><i class="fas fa-sign-out-alt"></i> Sair</a>
-        </div>
+{% include 'agenda/accessibility_bar.html' %}
+{% include 'agenda/_messages.html' %}
+
+<!-- ══ TOP BAR ══ -->
+<header class="top-bar">
+    <a class="top-bar-brand" href="{% url 'home_cliente' %}">
+        <img src="{% static 'logo.png' %}" alt="Agenda Aí">
+        <span>Área do Cliente</span>
+    </a>
+    <nav class="top-nav">
+        <a class="nav-link" href="{% url 'home_cliente' %}">
+            <i class="fas fa-home"></i><span>Home</span>
+        </a>
+        <a class="nav-link active" href="{% url 'meus_agendamentos' %}">
+            <i class="fas fa-calendar-alt"></i><span>Meus Agendamentos</span>
+        </a>
+        <a class="nav-link" href="{% url 'agendamento' %}">
+            <i class="fas fa-calendar-plus"></i><span>Novo Agendamento</span>
+        </a>
+        <a class="nav-sair" href="{% url 'logout_cliente' %}">
+            <i class="fas fa-sign-out-alt"></i> Sair
+        </a>
+    </nav>
+</header>
+
+<div class="container">
+
+    <!-- Cabeçalho da página -->
+    <div class="page-header">
+        <h1><i class="fas fa-calendar-alt"></i> Meus Agendamentos</h1>
+        <a href="{% url 'agendamento' %}" class="btn-novo">
+            <i class="fas fa-plus"></i> Novo Agendamento
+        </a>
     </div>
 
-    <div class="container">
-        <div class="card">
-            <h2><i class="fas fa-calendar-alt"></i> Meus Agendamentos</h2>
+    {% if agendamentos %}
+    <div class="ag-grid">
+        {% for a in agendamentos %}
+        <div class="ag-card status-{{ a.status }}" data-id="{{ a.id }}" role="button" tabindex="0"
+             aria-label="Ver detalhes de {{ a.servico.nome }}">
 
-            {% if agendamentos %}
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th><i class="fas fa-calendar-day"></i> Data</th>
-                            <th><i class="fas fa-clock"></i> Hora</th>
-                            <th><i class="fas fa-cut"></i> Serviço</th>
-                            <th><i class="fas fa-user"></i> Barbeiro</th>
-                            <th><i class="fas fa-tag"></i> Valor</th>
-                            <th><i class="fas fa-chart-line"></i> Status</th>
-                            <th><i class="fas fa-cog"></i> Ações</th> <!--botão excluir adiciona a tela agendamento-->
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for a in agendamentos %}
-                        <tr>
-                            <td>{{ a.data|date:"d/m/Y" }}</td>
-                            <td>{{ a.hora|time:"H:i" }}</td>
-                            <td>{{ a.servico.nome }}</td>
-                            <td>{{ a.barbeiro.nome }}</td>
-                            <td>R$ {{ a.servico.valor }}</td>
-                            <td>
-                                {% if a.status == 'pendente' %}
-                                    <span class="badge pendente">⏳ Pendente</span>
-                                {% elif a.status == 'confirmado' %}
-                                    <span class="badge confirmado">✅ Confirmado</span>
-                                {% elif a.status == 'execucao' %}
-                                    <span class="badge confirmado">✂️ Em atendimento</span>
-                                {% elif a.status == 'concluido' %}
-                                    <span class="badge concluido">✅ Concluído</span>
-                                {% elif a.status == 'cancelado' %}
-                                    <span class="badge cancelado">❌ Cancelado</span>
-                                {% else %}
-                                    <span class="badge">{{ a.status }}</span>
-                                {% endif %}
-                            </td>  
-                             
-                            <td>
-                                <!-- Botão de Cancelar -->
-                                {% if a.status != 'cancelado' %}
-                                    <a href="{% url 'cancelar_agendamento' a.id %}" 
-                                        class="btn-cancelar" 
-                                        onclick="return confirm('Tem certeza que deseja cancelar este agendamento?');">
-                                        <i class="fas fa-trash-alt"></i> Cancelar
-                                    </a>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="ag-card-top">
+                <p class="ag-servico">{{ a.servico.nome }}</p>
+                {% if a.status == 'pendente' %}
+                    <span class="ag-badge badge-pendente"><i class="fas fa-hourglass-half"></i> Pendente</span>
+                {% elif a.status == 'confirmado' %}
+                    <span class="ag-badge badge-confirmado"><i class="fas fa-check"></i> Confirmado</span>
+                {% elif a.status == 'execucao' %}
+                    <span class="ag-badge badge-execucao"><i class="fas fa-cut"></i> Em atendimento</span>
+                {% elif a.status == 'concluido' %}
+                    <span class="ag-badge badge-concluido"><i class="fas fa-check-double"></i> Concluído</span>
+                {% elif a.status == 'cancelado' %}
+                    <span class="ag-badge badge-cancelado"><i class="fas fa-times"></i> Cancelado</span>
+                {% endif %}
             </div>
-            {% else %}
-            <div class="sem-agendamentos">
-                <i class="fas fa-calendar-alt fa-3x mb-3" style="color: #764ba2;"></i>
-                <p>Você ainda não tem nenhum agendamento.</p>
-                <a href="{% url 'agendamento' %}" class="btn-primary" style="margin-top: 20px;">
-                    <i class="fas fa-calendar-plus"></i> Fazer um agendamento
-                </a>
+
+            <div class="ag-info">
+                <div class="ag-info-row">
+                    <i class="fas fa-user-tie"></i>
+                    <span>{{ a.barbeiro.nome }}</span>
+                </div>
+                <div class="ag-info-row">
+                    <i class="fas fa-calendar-day"></i>
+                    <span>{{ a.data|date:"d/m/Y" }}</span>
+                </div>
+                <div class="ag-info-row">
+                    <i class="fas fa-clock"></i>
+                    <span>{{ a.hora|time:"H:i" }}</span>
+                </div>
             </div>
-            {% endif %}
+
+            <div class="ag-footer">
+                <span class="ag-preco">R$ {{ a.servico.valor|floatformat:2 }}</span>
+                <span class="ag-hint"><i class="fas fa-eye"></i> Ver detalhes</span>
+            </div>
         </div>
+        {% endfor %}
     </div>
 
-    <div class="footer-social">
-        <a href="#" class="social-item"><i class="fab fa-instagram"></i> @AgendaAi</a>
-        <a href="#" class="social-item"><i class="fab fa-whatsapp"></i> (11) 99999-9999</a>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-calendar-alt"></i>
+        <p>Você ainda não tem nenhum agendamento.</p>
+        <a href="{% url 'agendamento' %}" class="btn-novo">
+            <i class="fas fa-calendar-plus"></i> Fazer um agendamento
+        </a>
     </div>
+    {% endif %}
+
+</div>
+
+<!-- ══ RODAPÉ ══ -->
+<footer class="footer-social">
+    <a href="#" class="social-item"><i class="fab fa-instagram"></i> @AgendaAi</a>
+    <a href="#" class="social-item"><i class="fab fa-whatsapp"></i> (11) 99999-9999</a>
+</footer>
+
+<!-- ══ MODAL DE DETALHES ══ -->
+<div class="modal-overlay" id="modal-overlay" hidden role="dialog" aria-modal="true">
+    <div class="modal">
+        <button class="modal-close" id="modal-fechar" aria-label="Fechar"><i class="fas fa-times"></i></button>
+
+        <h2 class="modal-title" id="modal-titulo"><i class="fas fa-calendar-check"></i> Agendamento</h2>
+
+        <!-- Leitura -->
+        <div id="modal-leitura">
+            <div class="detail-row"><span class="detail-label">Serviço</span><span class="detail-val" id="d-servico"></span></div>
+            <div class="detail-row"><span class="detail-label">Preço</span><span class="detail-val" id="d-preco"></span></div>
+            <div class="detail-row"><span class="detail-label">Barbeiro</span><span class="detail-val" id="d-barbeiro"></span></div>
+            <div class="detail-row"><span class="detail-label">Data</span><span class="detail-val" id="d-data"></span></div>
+            <div class="detail-row"><span class="detail-label">Hora</span><span class="detail-val" id="d-hora"></span></div>
+            <div class="detail-row"><span class="detail-label">Status</span><span class="detail-val" id="d-status"></span></div>
+            <div class="detail-row"><span class="detail-label">Observação</span><span class="detail-val" id="d-obs"></span></div>
+        </div>
+
+        <hr class="modal-divider">
+
+        <!-- Edição — só para pendente/confirmado -->
+        <div id="modal-edicao">
+            <p style="font-size:.82rem;opacity:.55;margin:0 0 14px;">Alterar agendamento</p>
+
+            <form id="form-editar" method="POST">
+                {% csrf_token %}
+
+                <label for="edit-servico">Serviço</label>
+                <select name="servico_id" id="edit-servico" required></select>
+
+                <label for="edit-data">Data</label>
+                <input type="date" name="data" id="edit-data" required>
+
+                <label>Horário</label>
+                <p class="status-msg-modal" id="status-msg-horarios"></p>
+                <div class="horarios-grid-modal" id="modal-horarios"></div>
+                <input type="hidden" name="horario" id="edit-horario">
+
+                <label for="edit-obs">Observação</label>
+                <textarea name="observacao" id="edit-obs" placeholder="(opcional)"></textarea>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn-modal btn-save"><i class="fas fa-save"></i> Salvar</button>
+                    <button type="button" class="btn-modal btn-delete" id="btn-cancelar-ag"><i class="fas fa-trash"></i> Cancelar agendamento</button>
+                    <button type="button" class="btn-modal btn-close" id="btn-fechar-modal"><i class="fas fa-times"></i> Fechar</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Aviso quando não pode editar -->
+        <div id="modal-nao-editavel" style="display:none;">
+            <div class="edit-disabled-notice">
+                <i class="fas fa-lock"></i>
+                <span>Este agendamento não pode mais ser alterado.</span>
+            </div>
+            <div class="modal-actions" style="margin-top:14px;">
+                <button type="button" class="btn-modal btn-close" id="btn-fechar-modal-2"><i class="fas fa-times"></i> Fechar</button>
+            </div>
+        </div>
+
+        <!-- Formulário oculto para cancelamento -->
+        <form id="form-cancelar" method="POST" style="display:none;"></form>
+    </div>
+</div>
+
+<script>
+const DETALHE_URL = '/agendamento/{id}/detalhe/';
+const EDITAR_URL  = '/agendamento/{id}/editar/';
+const CANCELAR_URL = '/cancelar-agendamento/{id}/';
+const HORARIOS_URL = '{% url "get_horarios" %}';
+
+const overlay    = document.getElementById('modal-overlay');
+const formEditar = document.getElementById('form-editar');
+const formCancelar = document.getElementById('form-cancelar');
+const modalHorarios = document.getElementById('modal-horarios');
+const editHorario = document.getElementById('edit-horario');
+const statusMsg  = document.getElementById('status-msg-horarios');
+
+let agAtual = null;
+let barbAtual = null;
+
+// ── Abre modal ao clicar no card ──
+document.querySelectorAll('.ag-card').forEach(card => {
+    card.addEventListener('click', () => abrirModal(card.dataset.id));
+    card.addEventListener('keydown', e => { if (e.key === 'Enter') abrirModal(card.dataset.id); });
+});
+
+async function abrirModal(agId) {
+    agAtual = agId;
+    overlay.hidden = false;
+    document.getElementById('modal-titulo').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando…';
+
+    try {
+        const r = await fetch(DETALHE_URL.replace('{id}', agId));
+        const d = await r.json();
+
+        barbAtual = d.barbeiro_id || null;
+
+        // Leitura
+        document.getElementById('d-servico').textContent  = d.servico_nome;
+        document.getElementById('d-preco').textContent    = `R$ ${d.servico_preco}`;
+        document.getElementById('d-barbeiro').textContent = d.barbeiro_nome;
+        document.getElementById('d-data').textContent     = d.data_display;
+        document.getElementById('d-hora').textContent     = d.hora;
+        document.getElementById('d-status').textContent   = d.status_label;
+        document.getElementById('d-obs').textContent      = d.observacao || '—';
+
+        document.getElementById('modal-titulo').innerHTML =
+            `<i class="fas fa-calendar-check"></i> ${d.servico_nome}`;
+
+        if (d.pode_editar) {
+            document.getElementById('modal-edicao').style.display   = 'block';
+            document.getElementById('modal-nao-editavel').style.display = 'none';
+
+            // Popula select de serviços
+            const sel = document.getElementById('edit-servico');
+            sel.innerHTML = '';
+            d.servicos.forEach(s => {
+                const opt = new Option(s.nome, s.id);
+                if (s.id === d.servico_id) opt.selected = true;
+                sel.add(opt);
+            });
+
+            // Data mínima = hoje
+            const hoje = new Date();
+            const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
+            const max = new Date(); max.setDate(max.getDate()+30);
+            const maxStr = `${max.getFullYear()}-${String(max.getMonth()+1).padStart(2,'0')}-${String(max.getDate()).padStart(2,'0')}`;
+            const editData = document.getElementById('edit-data');
+            editData.min = hojeStr;
+            editData.max = maxStr;
+            editData.value = d.data;
+
+            preencherHorarios(d.horarios_disponiveis, d.hora);
+
+            formEditar.action = EDITAR_URL.replace('{id}', agId);
+            document.getElementById('edit-obs').value = d.observacao;
+
+        } else {
+            document.getElementById('modal-edicao').style.display   = 'none';
+            document.getElementById('modal-nao-editavel').style.display = 'block';
+        }
+
+        // Formulário de cancelar
+        formCancelar.action = CANCELAR_URL.replace('{id}', agId);
+        formCancelar.innerHTML = `<input type="hidden" name="csrfmiddlewaretoken" value="${getCsrf()}">`;
+
+    } catch(e) {
+        document.getElementById('modal-titulo').textContent = 'Erro ao carregar.';
+    }
+}
+
+function preencherHorarios(horarios, selecionado) {
+    modalHorarios.innerHTML = '';
+    if (!horarios.length) {
+        statusMsg.textContent = 'Sem horários disponíveis nesta data.';
+        return;
+    }
+    statusMsg.textContent = '';
+    horarios.forEach(h => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'horario-btn-modal';
+        btn.textContent = h.valor;
+        btn.disabled = h.ocupado;
+        const sel = h.valor === selecionado;
+        btn.setAttribute('aria-pressed', sel ? 'true' : 'false');
+        if (sel) editHorario.value = h.valor;
+        btn.addEventListener('click', () => {
+            modalHorarios.querySelectorAll('.horario-btn-modal').forEach(b => b.setAttribute('aria-pressed','false'));
+            btn.setAttribute('aria-pressed','true');
+            editHorario.value = h.valor;
+        });
+        modalHorarios.appendChild(btn);
+    });
+}
+
+// Recarrega horários ao trocar data ou serviço
+document.getElementById('edit-data').addEventListener('change', recarregarHorarios);
+document.getElementById('edit-servico').addEventListener('change', recarregarHorarios);
+
+async function recarregarHorarios() {
+    if (!agAtual) return;
+    const data = document.getElementById('edit-data').value;
+    if (!data) return;
+
+    // Busca o barbeiro_id do agendamento atual via dataset do card
+    const card = document.querySelector(`.ag-card[data-id="${agAtual}"]`);
+    const servicoId = document.getElementById('edit-servico').value;
+
+    // Precisamos do barbeiro_id — guardamos no estado ao abrir o modal
+    if (!barbAtual) return;
+
+    statusMsg.textContent = 'Buscando horários…';
+    modalHorarios.innerHTML = '';
+    editHorario.value = '';
+
+    try {
+        const params = new URLSearchParams({ barbeiro_id: barbAtual, data, servico_id: servicoId });
+        const r    = await fetch(`${HORARIOS_URL}?${params}`);
+        const json = await r.json();
+        const lista = (json.horarios || []).map(h => ({ valor: h, ocupado: false }));
+        preencherHorarios(lista, '');
+        if (json.folga || !lista.length) statusMsg.textContent = 'Sem horários nesta data.';
+    } catch { statusMsg.textContent = 'Erro ao buscar horários.'; }
+}
+
+// ── Cancelar agendamento ──
+document.getElementById('btn-cancelar-ag').addEventListener('click', () => {
+    if (confirm('Confirma o cancelamento deste agendamento?')) formCancelar.submit();
+});
+
+// ── Fechar modal ──
+function fecharModal() { overlay.hidden = true; agAtual = null; }
+document.getElementById('modal-fechar').addEventListener('click', fecharModal);
+document.getElementById('btn-fechar-modal').addEventListener('click', fecharModal);
+document.getElementById('btn-fechar-modal-2').addEventListener('click', fecharModal);
+overlay.addEventListener('click', e => { if (e.target === overlay) fecharModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
+
+function getCsrf() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+</script>
 </body>
 </html>

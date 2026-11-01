@@ -214,18 +214,12 @@
         <div class="login-container">
             <div class="login-card">
                 <div class="brand-section">
-                    <img src="{% static 'logo_barber.png' %}" alt="Logo" class="logo-img">
+                    <img src="{% static 'logo.png' %}" alt="Agenda Aí" class="logo-img">
                     <h1>Cadastro</h1>
                     <p class="subtitle">Crie sua conta para agendar</p>
                 </div>
 
-                {% if messages %}
-                  <ul class="messages">
-                    {% for message in messages %}
-                      <li class="{{ message.tags }}">{{ message }}</li>
-                    {% endfor %}
-                  </ul>
-                {% endif %}
+                {% include 'agenda/_messages.html' %}
 
                 <form method="POST">
                     {% csrf_token %}

@@ -4,203 +4,353 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minha Agenda de Trabalho - Agenda Aí</title>
+    <title>Gerência — Agenda Aí</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        html {
-            background-color: #0a0519;
-        }
-        body {
-            background: linear-gradient(rgba(25,10,40,0.75), rgba(10,5,25,0.85)), url('{% static "fundo_barbearia.png" %}') no-repeat center center fixed;
-            background-size: cover;
-            font-family: 'Arial', sans-serif;
-            min-height: 100vh;
-            margin: 0;
-            color: white;
-            padding-bottom: 75px;
+        :root {
+            --purple:       #a855f7;
+            --purple-dim:   rgba(168,85,247,0.2);
+            --purple-grad:  linear-gradient(135deg, #667eea, #764ba2);
+            --border:       rgba(255,255,255,0.15);
+            --green:        rgba(16,185,129,0.85);
+            --red:          rgba(239,68,68,0.7);
         }
 
+        html { background: #0a0519; }
+
+        body {
+            background:
+                linear-gradient(rgba(25,10,40,0.78), rgba(10,5,25,0.88)),
+                url('{% static "fundo_barbearia.png" %}') no-repeat center center fixed;
+            background-size: cover;
+            font-family: Arial, sans-serif;
+            color: white;
+            min-height: 100vh;
+            margin: 0;
+            padding-bottom: 3rem;
+        }
+
+        /* ── Top bar ── */
         .top-bar {
-            background: rgba(40,20,60,0.3);
+            background: rgba(20,10,30,0.55);
             backdrop-filter: blur(25px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 15px 35px;
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: .75rem;
         }
+        .top-bar .brand { font-size: 1.05rem; font-weight: 700; color: var(--purple); }
+        .top-bar nav { display: flex; gap: 1.25rem; }
+        .top-bar a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: .9rem; }
+        .top-bar a:hover { color: white; }
 
-        .top-bar a {
-            color: white;
-            text-decoration: none;
-            margin-left: 20px;
-            opacity: 0.7;
-        }
+        /* ── Container ── */
+        .container { max-width: 820px; margin: 2.5rem auto; padding: 0 1.25rem; }
 
-        .top-bar a:hover {
-            opacity: 1;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 50px auto;
-            padding: 0 20px;
-        }
-
+        /* ── Card principal ── */
         .card {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255,255,255,0.04);
             backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 25px;
-            padding: 40px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 1.5rem;
+            padding: 2.5rem;
         }
 
-        .card h2 {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+        .card-header { text-align: center; margin-bottom: 1.75rem; }
+        .card-header h1 { font-size: 1.5rem; margin: 0 0 .4rem; }
+        .card-header h1 i { color: var(--purple); margin-right: .5rem; }
+        .card-header p { margin: 0; opacity: .6; font-size: .9rem; }
 
-        .card h2 i {
-            color: #764ba2;
-            margin-right: 10px;
+        /* ── Linha de cada dia ── */
+        .dia-row {
+            display: grid;
+            grid-template-columns: 130px 1fr 1fr 110px;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            margin-bottom: .75rem;
+            background: rgba(255,255,255,0.03);
+            transition: background .2s;
         }
+        .dia-row:hover { background: rgba(255,255,255,0.06); }
 
-        table {
+        /* Destaque verde quando ativo, vermelho quando folga */
+        .dia-row.ativo   { border-left: 3px solid var(--green); }
+        .dia-row.folga   { border-left: 3px solid var(--red); opacity: .75; }
+
+        .dia-nome {
+            font-weight: 700;
+            font-size: .95rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+        .dia-nome i { color: var(--purple); font-size: .85rem; }
+
+        /* ── Inputs de horário ── */
+        .campo-horario { display: flex; flex-direction: column; gap: .3rem; }
+        .campo-horario label {
+            font-size: .75rem;
+            opacity: .6;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+        .campo-horario input[type="time"] {
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        th {
-            color: #764ba2;
-            font-weight: bold;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .text-danger {
-            color: #f44336;
-        }
-
-        .small {
-            font-size: 0.85rem;
-        }
-
-        .text-muted {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            padding: .6rem .85rem;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid var(--border);
+            border-radius: .6rem;
             color: white;
-            padding: 12px 35px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: bold;
+            font: inherit;
+            font-size: .95rem;
+            box-sizing: border-box;
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+            transition: border-color .2s, background .2s;
+        }
+        .campo-horario input[type="time"]:focus {
+            outline: none;
+            border-color: var(--purple);
+            background: rgba(168,85,247,0.12);
+        }
+        /* Remove o ícone de relógio no Chrome para manter visual limpo */
+        .campo-horario input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1) opacity(.5);
+            cursor: pointer;
+        }
+
+        .erro { color: #fca5a5; font-size: .75rem; margin-top: .2rem; }
+
+        /* ── Toggle switch ── */
+        .toggle-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: .4rem;
+        }
+        .toggle-label-text {
+            font-size: .72rem;
+            opacity: .6;
+            text-align: center;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        .toggle {
+            position: relative;
             display: inline-block;
-            transition: 0.3s;
+            width: 52px;
+            height: 28px;
+        }
+        .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+        .slider {
+            position: absolute;
+            inset: 0;
+            background: rgba(239,68,68,0.45);
+            border-radius: 28px;
+            cursor: pointer;
+            transition: background .25s;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .slider::before {
+            content: '';
+            position: absolute;
+            width: 20px; height: 20px;
+            left: 3px; top: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: transform .25s;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+        .toggle input:checked + .slider {
+            background: rgba(16,185,129,0.65);
+        }
+        .toggle input:checked + .slider::before {
+            transform: translateX(24px);
+        }
+        .toggle input:focus-visible + .slider {
+            outline: 2px solid var(--purple);
+            outline-offset: 2px;
+        }
+
+        /* Status dinâmico abaixo do toggle */
+        .toggle-status {
+            font-size: .75rem;
+            font-weight: 700;
+        }
+        .toggle-status.ativo { color: var(--green); }
+        .toggle-status.folga { color: var(--red); }
+
+        /* ── Cabeçalho das colunas ── */
+        .grid-header {
+            display: grid;
+            grid-template-columns: 130px 1fr 1fr 110px;
+            gap: 1rem;
+            padding: 0 1.25rem .6rem;
+            font-size: .75rem;
+            opacity: .55;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        /* ── Botão salvar ── */
+        .salvar-wrap { text-align: center; margin-top: 2rem; }
+        .btn-salvar {
+            background: var(--purple-grad);
+            color: white;
+            padding: .85rem 2.5rem;
+            border-radius: 2rem;
             border: none;
             cursor: pointer;
-            margin-top: 25px;
+            font: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            transition: transform .2s, box-shadow .2s;
         }
-
-        .btn-success:hover {
+        .btn-salvar:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(56,239,125,0.4);
+            box-shadow: 0 6px 20px rgba(118,75,162,0.45);
         }
 
-        @media (max-width: 768px) {
-            th, td {
-                padding: 8px;
-                font-size: 0.9rem;
+        /* ── Mensagens ── */
+        .alert { padding: .75rem 1rem; border-radius: .75rem; margin-bottom: 1.25rem; font-size: .9rem; }
+        .alert-success { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); }
+        .alert-error   { background: rgba(239,68,68,0.15);  border: 1px solid rgba(239,68,68,0.4); }
+
+        /* ── Responsivo ── */
+        @media (max-width: 640px) {
+            .dia-row, .grid-header {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto auto;
             }
-            .card {
-                padding: 20px;
-            }
+            .dia-nome  { grid-column: 1 / -1; }
+            .toggle-wrap { grid-column: 1 / -1; flex-direction: row; justify-content: flex-start; gap: .75rem; }
+            .grid-header { display: none; }
+            .card { padding: 1.25rem; }
         }
     </style>
 </head>
 <body>
+{% include 'agenda/accessibility_bar.html' %}
 
-    <!-- 1. CORREÇÃO: Barra de topo com as divs fechadas corretamente -->
-    <div class="top-bar">
-        <span>💈 Agenda Aí - Gerencia</span>
-        <div>
-            <a href="{% url 'home_barbeiro' %}">Sair</a>
+<header class="top-bar">
+    <span class="brand"><img src="{% static 'logo.png' %}" alt="Agenda Aí" style="height:32px;vertical-align:middle;margin-right:.5rem;">Gerência</span>
+    <nav>
+        <a href="{% url 'home_barbeiro' %}"><i class="fas fa-th-large"></i> Painel</a>
+        <a href="{% url 'logout_cliente' %}"><i class="fas fa-sign-out-alt"></i> Sair</a>
+    </nav>
+</header>
+
+<main class="container">
+    <div class="card">
+        <div class="card-header">
+            <h1><i class="fas fa-calendar-days"></i> Minha Escala de Trabalho</h1>
+            <p>Configure seus dias de atendimento e horários de expediente.</p>
         </div>
-    </div>
 
-    <!-- Conteúdo principal envelopado na estrutura correta -->
-    <div class="container">
-        <div class="card">
-            <h2><i class="fa-solid fa-calendar-days"></i> Minha Agenda de Trabalho</h2>
-            <p class="text-muted" style="text-align: center;">Configure abaixo os seus dias de atendimento e horários de expediente.</p>
+        {% include 'agenda/_messages.html' %}
 
-            <form method="POST" action="">
-                {% csrf_token %}
-                <!-- Obrigatório para o funcionamento do Formset no Django -->
-                {{ formset.management_form }}
+        <form method="POST">
+            {% csrf_token %}
+            {{ formset.management_form }}
 
-                <table class="table table-bordered align-middle">
-                    <thead class=""table-light">
-                        <tr>
-                            <th>Dia da Semana</th>
-                            <th>Horário de Início</th>
-                            <th>Horário de Término</th>
-                            <th>Trabalha neste dia?</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for form in formset %}
-                            <tr>
-                                <!-- Campo oculto com o ID do registro no banco -->
-                                {{ form.id }}
-                                {{ form.dia_semana }}
-                                <td>
-                                    <!-- Exibe o texto amigável do dia da semana (Segunda, Terça, etc) -->
-                                    <strong>{{ form.instance.get_dia_semana_display }}</strong>
-                                    <!-- Mantém o campo real oculto apenas para validação de envio do Django -->
-                                    <div style="display:none;">{{ form.dia_semana }}</div>
-                                </td>
-                                <td>
-                                    {{ form.horario_inicio }}
-                                    {% if form.horario_inicio.errors %}
-                                        <div class="text-danger small">{{ form.horario_inicio.errors }}</div>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {{ form.horario_fim }}
-                                    {% if form.horario_fim.errors %}
-                                        <div class="text-danger small">{{ form.horario_fim.errors }}</div>
-                                    {% endif %}
-                                </td>
-                                <td class="text-center">
-                                    <div class="form-check d-inline-block">
-                                        {{ form.ativo }}
-                                    </div>
-                                    <label class="form-check-label d-block small text-muted">
-                                        Marque para Ativo / Desmarque para Folga
-                                    </label>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="grid-header">
+                <span>Dia</span>
+                <span>Início</span>
+                <span>Término</span>
+                <span style="text-align:center;">Atende</span>
+            </div>
 
-                <div style="text-align: center;">
-                    <button type="submit" class="btn btn-success">Salvar Minha Escala</button>
+            {% for form in formset %}
+            <div class="dia-row {% if form.instance.ativo %}ativo{% else %}folga{% endif %}"
+                 id="row-{{ forloop.counter0 }}">
+
+                {# Campos ocultos obrigatórios do formset #}
+                {{ form.id }}
+                <div style="display:none;">{{ form.dia_semana }}</div>
+
+                {# Nome do dia #}
+                <div class="dia-nome">
+                    <i class="fas fa-calendar-day"></i>
+                    {{ form.instance.get_dia_semana_display }}
                 </div>
-            </form>
-        </div>
-    </div>
 
+                {# Horário de início #}
+                <div class="campo-horario">
+                    <label for="{{ form.horario_inicio.id_for_label }}">
+                        <i class="fas fa-play" style="font-size:.65rem;"></i> Início
+                    </label>
+                    {{ form.horario_inicio }}
+                    {% if form.horario_inicio.errors %}
+                        <span class="erro">{{ form.horario_inicio.errors|join:", " }}</span>
+                    {% endif %}
+                </div>
+
+                {# Horário de término #}
+                <div class="campo-horario">
+                    <label for="{{ form.horario_fim.id_for_label }}">
+                        <i class="fas fa-stop" style="font-size:.65rem;"></i> Término
+                    </label>
+                    {{ form.horario_fim }}
+                    {% if form.horario_fim.errors %}
+                        <span class="erro">{{ form.horario_fim.errors|join:", " }}</span>
+                    {% endif %}
+                </div>
+
+                {# Toggle ativo/folga #}
+                <div class="toggle-wrap">
+                    <span class="toggle-label-text">Atende</span>
+                    <label class="toggle" aria-label="Atende neste dia">
+                        {{ form.ativo }}
+                        <span class="slider"></span>
+                    </label>
+                    <span class="toggle-status {% if form.instance.ativo %}ativo{% else %}folga{% endif %}"
+                          id="status-{{ forloop.counter0 }}">
+                        {% if form.instance.ativo %}Ativo{% else %}Folga{% endif %}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="salvar-wrap">
+                <button type="submit" class="btn-salvar">
+                    <i class="fas fa-save"></i> Salvar Escala
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<script>
+// Atualiza o texto do status e a cor da linha em tempo real ao mexer no toggle
+document.querySelectorAll('.toggle input[type="checkbox"]').forEach((checkbox, i) => {
+    const row    = document.getElementById(`row-${i}`);
+    const status = document.getElementById(`status-${i}`);
+
+    function atualizar() {
+        if (checkbox.checked) {
+            row.classList.replace('folga', 'ativo');
+            status.textContent = 'Ativo';
+            status.className = 'toggle-status ativo';
+        } else {
+            row.classList.replace('ativo', 'folga');
+            status.textContent = 'Folga';
+            status.className = 'toggle-status folga';
+        }
+    }
+
+    checkbox.addEventListener('change', atualizar);
+});
+</script>
 </body>
 </html>
