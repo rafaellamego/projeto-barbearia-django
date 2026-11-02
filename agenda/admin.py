@@ -1,7 +1,9 @@
 from django.contrib import admin
-from .models import Barbeiro, Usuario, Agendamento
+from .models import Barbeiro, Usuario, Agendamento, EscalaBarbeiro, Servico
 
 # Isso faz com que as tabelas apareçam na tela azul do navegador
 admin.site.register(Barbeiro)
 admin.site.register(Usuario)
 admin.site.register(Agendamento)
+admin.site.register(EscalaBarbeiro)
+admin.site.register(Servico)

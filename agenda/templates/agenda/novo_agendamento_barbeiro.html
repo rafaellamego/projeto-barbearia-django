@@ -1,0 +1,349 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novo Agendamento — Agenda Aí</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --purple: #a855f7; --purple-dim: rgba(168,85,247,0.2); --border: rgba(255,255,255,0.15); }
+        html { background: #0a0519; }
+        body {
+            background: linear-gradient(rgba(25,10,40,0.8), rgba(10,5,25,0.9)),
+                        url('{% static "fundo_barbearia.png" %}') no-repeat center center fixed;
+            background-size: cover;
+            font-family: Arial, sans-serif;
+            color: white;
+            min-height: 100vh;
+            margin: 0;
+            padding-bottom: 3rem;
+        }
+        .top-bar {
+            background: rgba(20,10,30,0.6);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .top-bar a { color: rgba(255,255,255,0.7); text-decoration: none; }
+        .top-bar a:hover { color: white; }
+        .top-bar .titulo { font-size: 1.1rem; font-weight: bold; color: var(--purple); margin-left: auto; margin-right: auto; }
+
+        .container { max-width: 640px; margin: 2.5rem auto; padding: 0 1.25rem; }
+        .card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 1.25rem;
+            padding: 2rem;
+        }
+        .card h1 { font-size: 1.4rem; margin: 0 0 1.5rem; }
+
+        .form-group { margin-bottom: 1.25rem; }
+        label { display: block; margin-bottom: .4rem; font-weight: 700; font-size: .9rem; opacity: .85; }
+        input[type="text"], input[type="date"], select, textarea {
+            width: 100%; padding: .75rem 1rem;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid var(--border);
+            border-radius: .65rem;
+            color: white;
+            font: inherit;
+            box-sizing: border-box;
+        }
+        select option { background: #1a0a2e; }
+        textarea { resize: vertical; min-height: 70px; }
+        input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.4); }
+
+        /* Tabs de tipo de cliente */
+        .tabs { display: flex; gap: .5rem; margin-bottom: 1.25rem; }
+        .tab-btn {
+            flex: 1; padding: .65rem; border-radius: .65rem; border: 1px solid var(--border);
+            background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.6);
+            cursor: pointer; font: inherit; font-size: .9rem; transition: .2s;
+        }
+        .tab-btn.active { background: var(--purple-dim); border-color: var(--purple); color: white; font-weight: 700; }
+        .tab-panel[hidden] { display: none; }
+
+        /* Busca de cliente */
+        .busca-wrap { display: flex; gap: .5rem; }
+        .busca-wrap input { flex: 1; }
+        .btn-buscar {
+            background: var(--purple-dim); border: 1px solid var(--purple);
+            color: white; padding: .75rem 1rem; border-radius: .65rem;
+            cursor: pointer; font: inherit; white-space: nowrap;
+        }
+        .cliente-encontrado {
+            margin-top: .5rem; padding: .6rem .9rem;
+            background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4);
+            border-radius: .6rem; font-size: .9rem;
+        }
+        .cliente-nao-encontrado {
+            margin-top: .5rem; padding: .6rem .9rem;
+            background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4);
+            border-radius: .6rem; font-size: .9rem;
+        }
+        [hidden] { display: none !important; }
+
+        /* Grid de horários */
+        .horarios-grid { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+        .horario-btn {
+            background: rgba(255,255,255,0.08); border: 1px solid var(--border);
+            color: white; padding: .55rem .9rem; border-radius: .5rem;
+            cursor: pointer; font: inherit; font-size: .85rem; transition: .2s;
+        }
+        .horario-btn:hover { background: var(--purple-dim); }
+        .horario-btn[aria-pressed="true"] { background: var(--purple); border-color: white; font-weight: 700; }
+        .horario-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+        .status-msg { min-height: 1.2rem; font-size: .85rem; opacity: .75; margin-top: .4rem; }
+
+        .alert { padding: .75rem 1rem; border-radius: .65rem; margin-bottom: 1rem; }
+        .alert-error { background: rgba(220,53,69,0.25); border: 1px solid rgba(220,53,69,0.5); }
+        .alert-success { background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4); }
+
+        .actions { display: flex; gap: .75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn {
+            padding: .75rem 1.5rem; border-radius: 2rem; border: none;
+            cursor: pointer; font: inherit; font-weight: 700; text-decoration: none;
+            display: inline-flex; align-items: center; gap: .5rem;
+        }
+        .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: white; }
+        .btn:hover { opacity: .85; }
+    </style>
+</head>
+<body>
+{% include 'agenda/accessibility_bar.html' %}
+
+<header class="top-bar">
+    <a href="{% url 'home_barbeiro' %}"><i class="fas fa-arrow-left"></i> Voltar</a>
+    <span class="titulo"><img src="{% static 'logo.png' %}" alt="Agenda Aí" style="height:28px;vertical-align:middle;margin-right:.4rem;">Novo Agendamento</span>
+    <a href="{% url 'logout_cliente' %}"><i class="fas fa-sign-out-alt"></i> Sair</a>
+</header>
+
+<main class="container">
+    <div class="card">
+        <h1><i class="fas fa-calendar-plus"></i> Criar Agendamento</h1>
+
+        {% include 'agenda/_messages.html' %}
+
+        <form method="POST" id="form-novo-ag">
+            {% csrf_token %}
+
+            {# ---- Tipo de cliente ---- #}
+            <div class="form-group">
+                <label>Cliente</label>
+                <div class="tabs" role="tablist">
+                    <button type="button" class="tab-btn active" role="tab"
+                            aria-selected="true" data-target="painel-cadastrado"
+                            id="tab-cadastrado">
+                        <i class="fas fa-search"></i> Buscar cadastrado
+                    </button>
+                    <button type="button" class="tab-btn" role="tab"
+                            aria-selected="false" data-target="painel-avulso"
+                            id="tab-avulso">
+                        <i class="fas fa-user-plus"></i> Nome avulso
+                    </button>
+                </div>
+            </div>
+
+            {# Painel: cliente cadastrado #}
+            <div id="painel-cadastrado" class="tab-panel" role="tabpanel">
+                <div class="form-group">
+                    <label for="telefone_cliente">Telefone do cliente (com DDD)</label>
+                    <div class="busca-wrap">
+                        <input type="text" id="telefone_cliente" name="telefone_cliente"
+                               placeholder="11987654321" maxlength="15" autocomplete="off">
+                        <button type="button" class="btn-buscar" id="btn-buscar">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                    </div>
+                    <div id="resultado-busca" hidden></div>
+                    <input type="hidden" name="tipo_cliente" id="tipo_cliente" value="cadastrado">
+                </div>
+            </div>
+
+            {# Painel: nome avulso #}
+            <div id="painel-avulso" class="tab-panel" role="tabpanel" hidden>
+                <div class="form-group">
+                    <label for="nome_avulso">Nome do cliente</label>
+                    <input type="text" id="nome_avulso" name="nome_avulso"
+                           placeholder="Ex: João Silva" maxlength="150">
+                </div>
+            </div>
+
+            {# ---- Serviço ---- #}
+            <div class="form-group">
+                <label for="servico_id">Serviço</label>
+                <select name="servico_id" id="servico_id" required>
+                    <option value="">— Selecione —</option>
+                    {% for s in servicos %}
+                        <option value="{{ s.id }}" data-duracao="{{ s.duracao_minutos }}">
+                            {{ s.nome }} — R$ {{ s.valor|floatformat:2 }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {# ---- Data ---- #}
+            <div class="form-group">
+                <label for="data">Data</label>
+                <input type="date" name="data" id="data"
+                       min="{{ data_minima }}" max="{{ data_maxima }}" required>
+            </div>
+
+            {# ---- Horário ---- #}
+            <div class="form-group">
+                <label>Horário</label>
+                <div id="horarios" class="horarios-grid"></div>
+                <input type="hidden" name="horario" id="horario_selecionado">
+                <p class="status-msg" id="status-horarios" role="status" aria-live="polite"></p>
+            </div>
+
+            {# ---- Observação ---- #}
+            <div class="form-group">
+                <label for="observacao">Observação (opcional)</label>
+                <textarea name="observacao" id="observacao"
+                          placeholder="Ex: cliente prefere franja para o lado direito"></textarea>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-check"></i> Salvar agendamento
+                </button>
+                <a href="{% url 'home_barbeiro' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</main>
+
+<script>
+(() => {
+    const BUSCAR_URL = '{% url "buscar_cliente_barbeiro" %}';
+    const HORARIOS_URL = '{% url "get_horarios" %}';
+    const BARBEIRO_ID = '{{ barbeiro.id }}';
+
+    // ---- Tabs ----
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-selected', 'false');
+            });
+            document.querySelectorAll('.tab-panel').forEach(p => p.hidden = true);
+
+            btn.classList.add('active');
+            btn.setAttribute('aria-selected', 'true');
+            document.getElementById(btn.dataset.target).hidden = false;
+
+            // Atualiza o campo hidden tipo_cliente
+            const tipo = btn.id === 'tab-cadastrado' ? 'cadastrado' : 'avulso';
+            document.getElementById('tipo_cliente').value = tipo;
+        });
+    });
+
+    // ---- Busca de cliente por telefone ----
+    const resultadoDiv = document.getElementById('resultado-busca');
+
+    document.getElementById('btn-buscar').addEventListener('click', async () => {
+        const tel = document.getElementById('telefone_cliente').value.trim();
+        if (!tel) return;
+        resultadoDiv.hidden = true;
+        resultadoDiv.className = '';
+        resultadoDiv.textContent = 'Buscando…';
+        resultadoDiv.hidden = false;
+
+        try {
+            const r = await fetch(`${BUSCAR_URL}?telefone=${encodeURIComponent(tel)}`);
+            const data = await r.json();
+            if (data.encontrado) {
+                resultadoDiv.className = 'cliente-encontrado';
+                resultadoDiv.innerHTML = `<i class="fas fa-check-circle"></i> <strong>${data.nome}</strong> encontrado.`;
+            } else {
+                resultadoDiv.className = 'cliente-nao-encontrado';
+                resultadoDiv.innerHTML = '<i class="fas fa-times-circle"></i> Cliente não encontrado. Use o campo "Nome avulso".';
+            }
+        } catch {
+            resultadoDiv.className = 'cliente-nao-encontrado';
+            resultadoDiv.textContent = 'Erro ao buscar. Tente novamente.';
+        }
+    });
+
+    // Busca ao pressionar Enter no campo de telefone
+    document.getElementById('telefone_cliente').addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-buscar').click(); }
+    });
+
+    // ---- Carrega horários (ao mudar serviço ou data) ----
+    const servicoSel = document.getElementById('servico_id');
+    const dataInput = document.getElementById('data');
+    const horariosGrid = document.getElementById('horarios');
+    const statusMsg = document.getElementById('status-horarios');
+    const horarioHidden = document.getElementById('horario_selecionado');
+
+    function limparHorarios() {
+        horariosGrid.innerHTML = '';
+        horarioHidden.value = '';
+        statusMsg.textContent = '';
+    }
+
+    async function carregarHorarios() {
+        const servico = servicoSel.value;
+        const data = dataInput.value;
+        if (!data) return;
+
+        limparHorarios();
+        statusMsg.textContent = 'Buscando horários…';
+
+        try {
+            const params = new URLSearchParams({ barbeiro_id: BARBEIRO_ID, data, servico_id: servico });
+            const r = await fetch(`${HORARIOS_URL}?${params}`);
+            const json = await r.json();
+
+            if (json.folga || !json.horarios.length) {
+                statusMsg.textContent = json.folga
+                    ? 'Você não atende neste dia conforme sua escala.'
+                    : 'Sem horários disponíveis para esta data.';
+                return;
+            }
+
+            json.horarios.forEach(h => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'horario-btn';
+                btn.textContent = h;
+                btn.setAttribute('aria-pressed', 'false');
+                btn.addEventListener('click', () => {
+                    horariosGrid.querySelectorAll('.horario-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+                    btn.setAttribute('aria-pressed', 'true');
+                    horarioHidden.value = h;
+                    statusMsg.textContent = `Horário selecionado: ${h}`;
+                });
+                horariosGrid.appendChild(btn);
+            });
+            statusMsg.textContent = 'Selecione um horário.';
+        } catch {
+            statusMsg.textContent = 'Erro ao buscar horários. Tente novamente.';
+        }
+    }
+
+    servicoSel.addEventListener('change', carregarHorarios);
+    dataInput.addEventListener('change', carregarHorarios);
+
+    // ---- Validação antes de enviar ----
+    document.getElementById('form-novo-ag').addEventListener('submit', e => {
+        if (!horarioHidden.value) {
+            e.preventDefault();
+            statusMsg.textContent = 'Selecione um horário antes de salvar.';
+            horariosGrid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+})();
+</script>
+</body>
+</html>

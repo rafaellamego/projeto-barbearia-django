@@ -2,6 +2,8 @@ import re
 from django import forms
 from django.core.exceptions import ValidationError
 
+from .models import EscalaBarbeiro
+from django.forms import modelformset_factory
 class CadastroBarbeiroForm(forms.Form):
     nome_completo = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
     email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
@@ -24,3 +26,27 @@ class CadastroBarbeiroForm(forms.Form):
         cleaned_data = super().clean()
         if cleaned_data.get("senha") != cleaned_data.get("confirmar_senha"):
             raise ValidationError("As senhas não conferem.")
+
+########### Escala Barbeiro
+class EscalaBarbeiroForm(forms.ModelForm):
+    class Meta:
+        model = EscalaBarbeiro
+        fields = ['dia_semana', 'horario_inicio', 'horario_fim', 'ativo']
+        widgets = {
+            # Oculta ou desabilita o select do dia para o barbeiro não alterar o dia da linha
+            'dia_semana': forms.HiddenInput(),
+           #'dia_semana': forms.Select(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'horario_inicio': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'horario_fim': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'ativo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+# Criamos um Formset que gerencia exatamente 7 formulários (um para cada dia da semana)
+# Desabilitamos a opção de excluir ou adicionar novas linhas dinamicamente
+EscalaFormSet = modelformset_factory(
+    EscalaBarbeiro, 
+    form=EscalaBarbeiroForm,
+    extra=0,
+    can_delete=False
+)
+        

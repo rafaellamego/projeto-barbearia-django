@@ -1,32 +1,62 @@
 [
-{
-  "model": "agenda.usuario",
-  "pk": 1,
-  "fields": {
-    "nome": "clinte01",
-    "telefone": "15900020002",
-    "data_nascimento": "1985-01-01",
-    "senha": "cliente"
+  {
+    "model": "agenda.usuario",
+    "pk": 1,
+    "fields": {
+      "nome": "clinte01",
+      "telefone": "15900020002",
+      "data_nascimento": "1985-01-01",
+      "senha": "cliente"
+    }
+  },
+  {
+    "model": "agenda.barbeiro",
+    "pk": 1,
+    "fields": {
+      "nome": "cortefino",
+      "telefone": "11900010001",
+      "senha": "agenda@123",
+      "especialidade": "barbeiro"
+    }
+  },
+  {
+    "model": "agenda.barbeiro",
+    "pk": 2,
+    "fields": {
+      "nome": "Barbeiroteste",
+      "telefone": "11922223333",
+      "senha": "ad123",
+      "especialidade": null
+    }
+  },
+  {
+    "model": "agenda.servico",
+    "pk": 1,
+    "fields": {
+      "nome": "Corte",
+      "descricao": "Corte de cabelo tradicional ou moderno",
+      "duracao_minutos": 30,
+      "valor": "30.00"
+    }
+  },
+  {
+    "model": "agenda.servico",
+    "pk": 2,
+    "fields": {
+      "nome": "Barba",
+      "descricao": "Barba completa com toalha quente",
+      "duracao_minutos": 20,
+      "valor": "20.00"
+    }
+  },
+  {
+    "model": "agenda.servico",
+    "pk": 3,
+    "fields": {
+      "nome": "Corte e Barba",
+      "descricao": "Combo completo de cabelo e barba",
+      "duracao_minutos": 50,
+      "valor": "45.00"
+    }
   }
-},
-{
-  "model": "agenda.barbeiro",
-  "pk": 1,
-  "fields": {
-    "nome": "cortefino",
-    "telefone": "11900010001",
-    "senha": "agenda@123",
-    "especialidade": "barbeiro"
-  }
-},
-{
-  "model": "agenda.barbeiro",
-  "pk": 2,
-  "fields": {
-    "nome": "Barbeiroteste",
-    "telefone": "11922223333",
-    "senha": "ad123",
-    "especialidade": null
-  }
-}
 ]

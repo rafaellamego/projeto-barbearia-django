@@ -4,296 +4,807 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Novo Agendamento - Agenda Aí</title>
+    <title>Novo Agendamento — Agenda Aí</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        html {
-            background-color: #0a0519;
+        :root {
+            --purple-bright: #a855f7;
+            --purple-glass:  rgba(168,85,247,0.18);
+            --border-glass:  rgba(255,255,255,0.12);
         }
+
+        html { background-color: #0a0519; }
         body {
-            background: linear-gradient(rgba(25,10,40,0.75), rgba(10,5,25,0.85)), url('{% static "fundo_barbearia.png" %}') no-repeat center center fixed;
+            background: linear-gradient(rgba(25,10,40,0.78), rgba(10,5,25,0.88)),
+                        url('{% static "fundo_barbearia.png" %}') no-repeat center center fixed;
             background-size: cover;
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
             min-height: 100vh;
             margin: 0;
             color: white;
-            padding-bottom: 75px;
+            padding-bottom: 80px;
         }
 
+        /* ══ TOP BAR ══ */
         .top-bar {
-            background: rgba(40,20,60,0.3);
-            backdrop-filter: blur(25px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 15px 35px;
+            background: rgba(15,8,28,0.75);
+            backdrop-filter: blur(28px);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 0 36px;
+            height: 64px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 200;
         }
-
-        .top-bar a {
-            color: white;
-            text-decoration: none;
-            margin-left: 20px;
-            opacity: 0.7;
+        .top-bar-brand {
+            display: flex; align-items: center; gap: 10px; text-decoration: none;
         }
-
-        .top-bar a:hover {
-            opacity: 1;
+        .top-bar-brand img { height: 36px; }
+        .top-bar-brand span {
+            font-size: .75rem; letter-spacing: .15em; text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
         }
-
-        .container {
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 0 20px;
+        .top-nav { display: flex; align-items: center; gap: 6px; }
+        .nav-link {
+            display: flex; align-items: center; gap: 7px;
+            padding: 8px 16px; border-radius: 10px;
+            color: rgba(255,255,255,0.65); text-decoration: none;
+            font-size: .88rem; font-weight: 500;
+            transition: background .2s, color .2s;
         }
+        .nav-link:hover  { background: rgba(255,255,255,0.07); color: white; }
+        .nav-link.active { background: var(--purple-glass); color: white; border: 1px solid rgba(168,85,247,0.3); }
+        .nav-link i      { font-size: .9rem; color: var(--purple-bright); }
+        .nav-sair {
+            display: flex; align-items: center; gap: 7px;
+            padding: 8px 22px; border-radius: 10px;
+            color: rgba(255,255,255,0.4); text-decoration: none;
+            font-size: .88rem; font-weight: 500; transition: color .2s;
+            margin-left: 6px; border-left: 1px solid var(--border-glass);
+        }
+        .nav-sair:hover { color: rgba(255,255,255,0.75); }
 
-        .card {
-            background: rgba(255, 255, 255, 0.05);
+        /* ══ CONTAINER ══ */
+        .container { max-width: 680px; margin: 40px auto; padding: 0 20px; }
+
+        /* ══ STEPPER ══ */
+        .stepper {
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 36px;
+        }
+        .step {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 6px; position: relative; z-index: 1;
+        }
+        .step-circle {
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.04);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: .88rem;
+            color: rgba(255,255,255,0.3);
+            transition: all .35s;
+        }
+        .step-label {
+            font-size: .65rem; text-transform: uppercase; letter-spacing: .07em;
+            color: rgba(255,255,255,0.28); transition: color .35s; white-space: nowrap;
+        }
+        .step.active .step-circle {
+            background: var(--purple-bright); border-color: var(--purple-bright);
+            color: white; box-shadow: 0 0 18px rgba(168,85,247,0.65);
+        }
+        .step.active .step-label { color: var(--purple-bright); font-weight: 700; }
+        .step.done .step-circle  { background: rgba(168,85,247,0.25); border-color: var(--purple-bright); color: var(--purple-bright); }
+        .step.done .step-label   { color: rgba(255,255,255,0.45); }
+        .step-line {
+            flex: 1; height: 2px; background: rgba(255,255,255,0.08);
+            margin: 0 6px; margin-bottom: 26px;
+            transition: background .35s; min-width: 24px;
+        }
+        .step-line.done { background: rgba(168,85,247,0.45); }
+
+        /* ══ CARD DE ETAPA ══ */
+        .step-card {
+            background: rgba(255,255,255,0.04);
             backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 25px;
-            padding: 40px;
-            text-align: center;
+            border: 1px solid var(--border-glass);
+            border-radius: 22px;
+            padding: 36px 40px;
+            display: none;
+            animation: fadeIn .3s ease;
+        }
+        .step-card.visible { display: block; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+        .step-card-header {
+            display: flex; align-items: center; gap: 16px; margin-bottom: 28px;
+        }
+        .step-card-icon {
+            width: 50px; height: 50px; border-radius: 15px;
+            background: var(--purple-glass);
+            border: 1px solid rgba(168,85,247,0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.35rem; color: var(--purple-bright); flex-shrink: 0;
+        }
+        .step-card-title { font-size: 1.2rem; font-weight: 800; margin: 0; }
+        .step-card-sub   { font-size: .8rem; color: rgba(255,255,255,0.45); margin: 3px 0 0; }
+
+        /* ══ CARDS DE SERVIÇO ══ */
+        .servicos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 12px;
+        }
+        .servico-card {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 18px 16px;
+            cursor: pointer;
+            transition: all .2s;
+            display: flex; flex-direction: column; gap: 8px;
+            position: relative; overflow: hidden;
+        }
+        .servico-card::after {
+            content: '';
+            position: absolute; inset: 0; border-radius: 14px;
+            background: var(--purple-glass); opacity: 0;
+            transition: opacity .2s;
+        }
+        .servico-card:hover { border-color: rgba(168,85,247,0.4); transform: translateY(-2px); }
+        .servico-card:hover::after { opacity: 1; }
+        .servico-card.selected {
+            border-color: var(--purple-bright);
+            background: rgba(168,85,247,0.18);
+            box-shadow: 0 0 16px rgba(168,85,247,0.3);
+        }
+        .servico-card.selected::after { opacity: 0; }
+
+        .servico-check {
+            position: absolute; top: 10px; right: 10px;
+            width: 22px; height: 22px; border-radius: 50%;
+            background: var(--purple-bright);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .65rem; color: white;
+            opacity: 0; transform: scale(0);
+            transition: opacity .2s, transform .2s;
+        }
+        .servico-card.selected .servico-check { opacity: 1; transform: scale(1); }
+
+        .servico-icon {
+            width: 40px; height: 40px; border-radius: 12px;
+            background: rgba(168,85,247,0.15);
+            border: 1px solid rgba(168,85,247,0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; color: var(--purple-bright);
+        }
+        .servico-nome  { font-size: .95rem; font-weight: 700; margin: 0; }
+        .servico-meta  { display: flex; gap: 10px; flex-wrap: wrap; }
+        .servico-preco { font-size: .85rem; font-weight: 700; color: var(--purple-bright); }
+        .servico-duracao {
+            font-size: .75rem; color: rgba(255,255,255,0.4);
+            display: flex; align-items: center; gap: 4px;
         }
 
-        .card h2 {
-            margin-bottom: 20px;
-            color: white;
+        /* ══ DATA INPUT ══ */
+        .date-wrapper {
+            position: relative;
         }
-
-        .form-group {
-            margin-bottom: 20px;
-            text-align: left;
+        .date-wrapper i {
+            position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+            color: var(--purple-bright); font-size: .9rem; pointer-events: none;
         }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
+        input[type="date"] {
+            width: 100%; padding: 14px 15px 14px 42px;
+            border-radius: 12px;
+            border: 1.5px solid var(--border-glass);
+            background: rgba(255,255,255,0.06);
+            color: white; font-size: .95rem;
+            box-sizing: border-box;
+            transition: border-color .2s, background .2s;
+            cursor: pointer;
         }
+        input[type="date"]:hover  { background: rgba(255,255,255,0.09); border-color: rgba(168,85,247,0.3); }
+        input[type="date"]:focus  { outline: none; border-color: var(--purple-bright); background: rgba(168,85,247,0.07); }
 
-        select, input[type="date"] {
-            width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.3);
-            background: rgba(255,255,255,0.1);
-            color: white;
-            font-size: 1rem;
+        /* ══ CARDS DE BARBEIRO ══ */
+        .barbeiros-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
         }
-
-        select option {
-            background: #0a0519;
+        .barbeiro-card {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px 14px;
+            text-align: center; cursor: pointer;
+            transition: all .2s; position: relative;
         }
+        .barbeiro-card:hover { background: rgba(255,255,255,0.08); border-color: rgba(168,85,247,0.4); transform: translateY(-2px); }
+        .barbeiro-card.selected {
+            background: rgba(168,85,247,0.2);
+            border-color: var(--purple-bright);
+            box-shadow: 0 0 16px rgba(168,85,247,0.3);
+        }
+        .barbeiro-avatar {
+            width: 52px; height: 52px; border-radius: 50%;
+            background: rgba(168,85,247,0.2);
+            border: 2px solid rgba(168,85,247,0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; color: var(--purple-bright);
+            margin: 0 auto 10px;
+        }
+        .barbeiro-card.selected .barbeiro-avatar {
+            background: var(--purple-bright);
+            color: white; border-color: white;
+        }
+        .barbeiro-nome { font-size: .88rem; font-weight: 700; }
+        .barbeiro-card .servico-check { top: 8px; right: 8px; }
 
+        /* ══ BOTÕES DE HORÁRIO ══ */
         .horarios-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
+            display: flex; flex-wrap: wrap; gap: 10px;
+            margin-top: 4px; min-height: 44px;
         }
-
         .horario-btn {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.3);
-            padding: 10px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.3s;
+            background: rgba(255,255,255,0.07);
+            border: 1.5px solid rgba(255,255,255,0.1);
+            color: white; padding: 10px 18px;
+            border-radius: 10px; cursor: pointer;
+            font: inherit; font-size: .9rem; font-weight: 600;
+            transition: all .2s;
         }
-
-        .horario-btn:hover {
-            background: #667eea;
-        }
-
+        .horario-btn:hover   { background: var(--purple-glass); border-color: rgba(168,85,247,0.5); }
         .horario-btn.selected {
-            background: #764ba2;
-            border-color: white;
+            background: var(--purple-bright); border-color: white;
+            box-shadow: 0 4px 14px rgba(168,85,247,0.4);
         }
 
+        /* ══ LABEL ══ */
+        .field-label {
+            font-size: .8rem; font-weight: 700;
+            color: rgba(255,255,255,0.55);
+            text-transform: uppercase; letter-spacing: .08em;
+            margin-bottom: 12px; display: block;
+        }
+
+        /* ══ RESUMO INLINE ══ */
+        .resumo-inline {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px;
+        }
+        .resumo-tag {
+            background: rgba(168,85,247,0.12);
+            border: 1px solid rgba(168,85,247,0.25);
+            border-radius: 20px; padding: 5px 13px;
+            font-size: .78rem; color: rgba(255,255,255,0.7);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .resumo-tag i { color: var(--purple-bright); }
+
+        /* ══ MENSAGEM STATUS ══ */
+        .msg-status {
+            font-size: .85rem; color: rgba(255,255,255,0.45);
+            padding: 8px 0; display: flex; align-items: center; gap: 7px;
+        }
+
+        /* ══ RESUMO FINAL ══ */
+        .resumo-final {
+            background: rgba(168,85,247,0.07);
+            border: 1px solid rgba(168,85,247,0.2);
+            border-radius: 16px; padding: 4px 0; margin-bottom: 4px;
+            overflow: hidden;
+        }
+        .resumo-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 13px 20px; font-size: .9rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: background .15s;
+        }
+        .resumo-row:last-child { border-bottom: none; }
+        .resumo-row:hover { background: rgba(255,255,255,0.03); }
+        .resumo-row-label { display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,0.5); }
+        .resumo-row-label i { color: var(--purple-bright); width: 16px; text-align: center; }
+        .resumo-row-val { font-weight: 700; }
+
+        /* ══ BOTÕES ══ */
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px 35px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-            transition: 0.3s;
-            width: 100%;
-            margin-top: 20px;
+            background: linear-gradient(135deg,#667eea,#764ba2);
+            color: white; padding: 14px 35px;
+            border-radius: 50px; border: none;
+            font: inherit; font-weight: 700; font-size: .95rem;
+            cursor: pointer; transition: .25s;
+            width: 100%; margin-top: 28px;
+            display: flex; align-items: center; justify-content: center; gap: 9px;
         }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(118,75,162,0.4);
-        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(118,75,162,0.45); }
+        .btn-primary:disabled { opacity: .35; cursor: not-allowed; transform: none; box-shadow: none; }
 
         .btn-secondary {
-            background: rgba(255,255,255,0.1);
-            color: white;
-            padding: 12px 35px;
-            border-radius: 50px;
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.7); padding: 12px 35px;
+            border-radius: 50px; border: 1px solid var(--border-glass);
+            font: inherit; font-weight: 600; font-size: .9rem;
+            cursor: pointer; transition: .2s;
+            width: 100%; margin-top: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
             text-decoration: none;
-            font-weight: bold;
-            display: inline-block;
-            margin-top: 15px;
-            width: 100%;
-            text-align: center;
         }
+        .btn-secondary:hover { background: rgba(255,255,255,0.1); color: white; }
 
+        /* ══ RODAPÉ ══ */
         .footer-social {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(10, 5, 20, 0.95);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 18px 0;
-            display: flex;
-            justify-content: center;
-            gap: 50px;
-            z-index: 1000;
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(10,5,20,0.92); backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 14px 0;
+            display: flex; justify-content: center; gap: 48px; z-index: 100;
         }
-
         .social-item {
-            color: white;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            opacity: 0.8;
+            color: rgba(255,255,255,0.55); text-decoration: none;
+            display: flex; align-items: center; gap: 9px;
+            font-size: .85rem; transition: color .2s;
         }
+        .social-item i { color: var(--purple-bright); }
+        .social-item:hover { color: white; }
 
-        .social-item:hover {
-            opacity: 1;
-        }
-
-        .alert {
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .alert-error {
-            background: rgba(220,53,69,0.3);
-            border: 1px solid #dc3545;
-        }
-
-        .alert-success {
-            background: rgba(40,167,69,0.3);
-            border: 1px solid #28a745;
+        /* ══ RESPONSIVO ══ */
+        @media (max-width: 600px) {
+            .top-bar { padding: 0 18px; }
+            .top-bar-brand span, .nav-link span { display: none; }
+            .step-card { padding: 24px 20px; }
+            .servicos-grid { grid-template-columns: 1fr 1fr; }
+            .barbeiros-grid { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
 <body>
-    <div class="top-bar">
-        <span>💈 Agenda Aí - Novo Agendamento</span>
-        <div>
-            <a href="{% url 'home_cliente' %}"><i class="fas fa-home"></i> Home</a>
-            <a href="{% url 'meus_agendamentos' %}"><i class="fas fa-calendar-alt"></i> Meus Agendamentos</a>
-            <a href="{% url 'logout_cliente' %}"><i class="fas fa-sign-out-alt"></i> Sair</a>
+{% include 'agenda/accessibility_bar.html' %}
+
+<!-- ══ TOP BAR ══ -->
+<header class="top-bar">
+    <a class="top-bar-brand" href="{% url 'home_cliente' %}">
+        <img src="{% static 'logo.png' %}" alt="Agenda Aí">
+        <span>Novo Agendamento</span>
+    </a>
+    <nav class="top-nav">
+        <a class="nav-link" href="{% url 'home_cliente' %}">
+            <i class="fas fa-home"></i><span>Home</span>
+        </a>
+        <a class="nav-link" href="{% url 'meus_agendamentos' %}">
+            <i class="fas fa-calendar-alt"></i><span>Meus Agendamentos</span>
+        </a>
+        <a class="nav-link active" href="{% url 'agendamento' %}">
+            <i class="fas fa-calendar-plus"></i><span>Novo Agendamento</span>
+        </a>
+        <a class="nav-sair" href="{% url 'logout_cliente' %}">
+            <i class="fas fa-sign-out-alt"></i> Sair
+        </a>
+    </nav>
+</header>
+
+<div class="container">
+    {% include 'agenda/_messages.html' %}
+
+    <!-- ══ STEPPER ══ -->
+    <div class="stepper" id="stepper">
+        <div class="step active" id="dot-1">
+            <div class="step-circle">1</div>
+            <div class="step-label">Serviço</div>
+        </div>
+        <div class="step-line" id="line-1"></div>
+        <div class="step" id="dot-2">
+            <div class="step-circle">2</div>
+            <div class="step-label">Data</div>
+        </div>
+        <div class="step-line" id="line-2"></div>
+        <div class="step" id="dot-3">
+            <div class="step-circle">3</div>
+            <div class="step-label">Barbeiro</div>
+        </div>
+        <div class="step-line" id="line-3"></div>
+        <div class="step" id="dot-4">
+            <div class="step-circle">4</div>
+            <div class="step-label">Horário</div>
+        </div>
+        <div class="step-line" id="line-4"></div>
+        <div class="step" id="dot-5">
+            <div class="step-circle"><i class="fas fa-check" style="font-size:.7rem;"></i></div>
+            <div class="step-label">Confirmar</div>
         </div>
     </div>
 
-    <div class="container">
-        <div class="card">
-            <i class="fas fa-calendar-plus" style="font-size: 3rem; margin-bottom: 20px;"></i>
-            <h2>📅 Novo Agendamento</h2>
-
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-
-            <form method="POST" action="{% url 'salvar_agendamento' %}" id="form-agendamento">
-                {% csrf_token %}
-
-                <div class="form-group">
-                    <label><i class="fas fa-cut"></i> Serviço:</label>
-                    <select name="servico_id" id="servico" required>
-                        <option value="">-- Selecione --</option>
-                        {% for servico in servicos %}
-                        <option value="{{ servico.id }}">{{ servico.nome }} - R$ {{ servico.valor }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label><i class="fas fa-user"></i> Barbeiro:</label>
-                    <select name="barbeiro_id" id="barbeiro" required>
-                        <option value="">-- Selecione --</option>
-                        {% for barbeiro in barbeiros %}
-                        <option value="{{ barbeiro.id }}">{{ barbeiro.nome }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label><i class="fas fa-calendar-day"></i> Data:</label>
-                    <input type="date" name="data" id="data" required>
-                </div>
-
-                <div class="form-group">
-                    <label><i class="fas fa-clock"></i> Horário:</label>
-                    <div id="horarios" class="horarios-grid"></div>
-                    <input type="hidden" name="horario" id="horario_selecionado">
-                </div>
-
-                <button type="submit" class="btn-primary">
-                    <i class="fas fa-check-circle"></i> Confirmar Agendamento
-                </button>
-                <a href="{% url 'home_cliente' %}" class="btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Voltar
-                </a>
-            </form>
+    <!-- ══ ETAPA 1 — Serviço ══ -->
+    <div class="step-card visible" id="etapa-1">
+        <div class="step-card-header">
+            <div class="step-card-icon"><i class="fas fa-cut"></i></div>
+            <div>
+                <p class="step-card-title">Escolha o serviço</p>
+                <p class="step-card-sub">Toque no serviço que deseja realizar</p>
+            </div>
         </div>
+
+        <span class="field-label">Serviços disponíveis</span>
+        <div class="servicos-grid" id="servicos-grid">
+            {% for servico in servicos %}
+            <div class="servico-card"
+                 data-id="{{ servico.id }}"
+                 data-nome="{{ servico.nome }}"
+                 data-preco="{{ servico.valor|floatformat:2 }}"
+                 data-duracao="{{ servico.duracao_minutos }}">
+                <div class="servico-check"><i class="fas fa-check"></i></div>
+                <div class="servico-icon"><i class="fas fa-cut"></i></div>
+                <p class="servico-nome">{{ servico.nome }}</p>
+                <div class="servico-meta">
+                    <span class="servico-preco">R$ {{ servico.valor|floatformat:2 }}</span>
+                    <span class="servico-duracao"><i class="fas fa-clock"></i>{{ servico.duracao_minutos }} min</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <button class="btn-primary" id="btn-avancar-1" disabled>
+            <i class="fas fa-arrow-right"></i> Continuar
+        </button>
     </div>
 
-    <div class="footer-social">
-        <a href="#" class="social-item"><i class="fab fa-instagram"></i> @AgendaAi</a>
-        <a href="#" class="social-item"><i class="fab fa-whatsapp"></i> (11) 99999-9999</a>
+    <!-- ══ ETAPA 2 — Data ══ -->
+    <div class="step-card" id="etapa-2">
+        <div class="step-card-header">
+            <div class="step-card-icon"><i class="fas fa-calendar-day"></i></div>
+            <div>
+                <p class="step-card-title">Escolha a data</p>
+                <p class="step-card-sub">Os barbeiros disponíveis serão carregados automaticamente</p>
+            </div>
+        </div>
+
+        <div class="resumo-inline" id="resumo-etapa-2"></div>
+
+        <span class="field-label">Data do agendamento</span>
+        <div class="date-wrapper" style="margin-bottom: 4px;">
+            <i class="fas fa-calendar-day"></i>
+            <input type="date" id="sel-data">
+        </div>
+
+        <button class="btn-primary" id="btn-avancar-2" disabled style="margin-top:24px;">
+            <i class="fas fa-arrow-right"></i> Ver barbeiros disponíveis
+        </button>
+        <button class="btn-secondary" id="btn-voltar-2">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </button>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        $('#servico, #barbeiro, #data').change(function() {
-            var barbeiro = $('#barbeiro').val();
-            var data = $('#data').val();
-            
-            if (barbeiro && data) {
-                $.get('/get-horarios/', {
-                    'barbeiro_id': barbeiro,
-                    'data': data
-                }, function(response) {
-                    var container = $('#horarios');
-                    container.empty();
-                    if (response.horarios && response.horarios.length > 0) {
-                        response.horarios.forEach(function(h) {
-                            var btn = $('<div>').addClass('horario-btn').text(h);
-                            btn.click(function() {
-                                $('.horario-btn').removeClass('selected');
-                                $(this).addClass('selected');
-                                $('#horario_selecionado').val(h);
-                            });
-                            container.append(btn);
-                        });
-                    } else {
-                        container.html('<p style="color: rgba(255,255,255,0.7);">Nenhum horário disponível nesta data.</p>');
-                    }
-                });
-            }
-        });
+    <!-- ══ ETAPA 3 — Barbeiro ══ -->
+    <div class="step-card" id="etapa-3">
+        <div class="step-card-header">
+            <div class="step-card-icon"><i class="fas fa-user-tie"></i></div>
+            <div>
+                <p class="step-card-title">Escolha o barbeiro</p>
+                <p class="step-card-sub">Apenas os que atendem neste dia são exibidos</p>
+            </div>
+        </div>
 
-        $('#form-agendamento').submit(function(e) {
-            if (!$('#horario_selecionado').val()) {
-                e.preventDefault();
-                alert('Por favor, selecione um horário!');
-            }
+        <div class="resumo-inline" id="resumo-etapa-3"></div>
+
+        <span class="field-label">Barbeiros disponíveis</span>
+        <p class="msg-status" id="msg-barbeiros" style="display:none;"></p>
+        <div class="barbeiros-grid" id="barbeiros-grid"></div>
+
+        <button class="btn-primary" id="btn-avancar-3" disabled>
+            <i class="fas fa-arrow-right"></i> Ver horários disponíveis
+        </button>
+        <button class="btn-secondary" id="btn-voltar-3">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </button>
+    </div>
+
+    <!-- ══ ETAPA 4 — Horário ══ -->
+    <div class="step-card" id="etapa-4">
+        <div class="step-card-header">
+            <div class="step-card-icon"><i class="fas fa-clock"></i></div>
+            <div>
+                <p class="step-card-title">Escolha o horário</p>
+                <p class="step-card-sub">Somente horários livres são exibidos</p>
+            </div>
+        </div>
+
+        <div class="resumo-inline" id="resumo-etapa-4"></div>
+
+        <span class="field-label">Horários disponíveis</span>
+        <p class="msg-status" id="msg-horarios" style="display:none;"></p>
+        <div class="horarios-grid" id="horarios-grid"></div>
+        <input type="hidden" id="horario-selecionado">
+
+        <button class="btn-primary" id="btn-avancar-4" disabled>
+            <i class="fas fa-arrow-right"></i> Revisar agendamento
+        </button>
+        <button class="btn-secondary" id="btn-voltar-4">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </button>
+    </div>
+
+    <!-- ══ ETAPA 5 — Confirmação ══ -->
+    <div class="step-card" id="etapa-5">
+        <div class="step-card-header">
+            <div class="step-card-icon"><i class="fas fa-check-circle"></i></div>
+            <div>
+                <p class="step-card-title">Confirme o agendamento</p>
+                <p class="step-card-sub">Revise tudo antes de finalizar</p>
+            </div>
+        </div>
+
+        <div class="resumo-final">
+            <div class="resumo-row">
+                <span class="resumo-row-label"><i class="fas fa-cut"></i>Serviço</span>
+                <span class="resumo-row-val" id="conf-servico">—</span>
+            </div>
+            <div class="resumo-row">
+                <span class="resumo-row-label"><i class="fas fa-tag"></i>Preço</span>
+                <span class="resumo-row-val" id="conf-preco" style="color:var(--purple-bright)">—</span>
+            </div>
+            <div class="resumo-row">
+                <span class="resumo-row-label"><i class="fas fa-user-tie"></i>Barbeiro</span>
+                <span class="resumo-row-val" id="conf-barbeiro">—</span>
+            </div>
+            <div class="resumo-row">
+                <span class="resumo-row-label"><i class="fas fa-calendar"></i>Data</span>
+                <span class="resumo-row-val" id="conf-data">—</span>
+            </div>
+            <div class="resumo-row">
+                <span class="resumo-row-label"><i class="fas fa-clock"></i>Horário</span>
+                <span class="resumo-row-val" id="conf-hora">—</span>
+            </div>
+        </div>
+
+        <form method="POST" action="{% url 'salvar_agendamento' %}" id="form-agendamento">
+            {% csrf_token %}
+            <input type="hidden" name="servico_id"  id="f-servico">
+            <input type="hidden" name="barbeiro_id" id="f-barbeiro">
+            <input type="hidden" name="data"        id="f-data">
+            <input type="hidden" name="horario"     id="f-horario">
+
+            <button type="submit" class="btn-primary" style="margin-top:24px;">
+                <i class="fas fa-calendar-check"></i> Confirmar Agendamento
+            </button>
+        </form>
+
+        <button class="btn-secondary" id="btn-voltar-5">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </button>
+    </div>
+
+</div><!-- /container -->
+
+<!-- ══ RODAPÉ ══ -->
+<footer class="footer-social">
+    <a href="#" class="social-item"><i class="fab fa-instagram"></i> @AgendaAi</a>
+    <a href="#" class="social-item"><i class="fab fa-whatsapp"></i> (11) 99999-9999</a>
+</footer>
+
+<script>
+const estado = {
+    servicoId: null, servicoNome: null, servicoPreco: null,
+    data: null, dataDisplay: null,
+    barbId: null, barbNome: null,
+    hora: null,
+};
+
+const BARBEIROS_URL = '{% url "get_barbeiros" %}';
+const HORARIOS_URL  = '{% url "get_horarios" %}';
+
+// ── Helpers ──
+function mostrarEtapa(n) {
+    document.querySelectorAll('.step-card').forEach(c => c.classList.remove('visible'));
+    document.getElementById(`etapa-${n}`).classList.add('visible');
+    atualizarStepper(n);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function atualizarStepper(ativa) {
+    for (let i = 1; i <= 5; i++) {
+        const dot = document.getElementById(`dot-${i}`);
+        dot.classList.remove('active','done');
+        if (i < ativa)      dot.classList.add('done');
+        else if (i === ativa) dot.classList.add('active');
+    }
+    for (let i = 1; i <= 4; i++)
+        document.getElementById(`line-${i}`).classList.toggle('done', i < ativa);
+}
+
+function tag(icon, txt) {
+    return `<span class="resumo-tag"><i class="${icon}"></i>${txt}</span>`;
+}
+function fmtData(iso) {
+    if (!iso) return '';
+    const [y,m,d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+}
+
+// ══════════════════════════════════
+//  ETAPA 1 — Cards de serviço
+// ══════════════════════════════════
+const btnAv1 = document.getElementById('btn-avancar-1');
+
+document.querySelectorAll('.servico-card').forEach(card => {
+    card.addEventListener('click', () => {
+        document.querySelectorAll('.servico-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        estado.servicoId    = card.dataset.id;
+        estado.servicoNome  = card.dataset.nome;
+        estado.servicoPreco = card.dataset.preco;
+        btnAv1.disabled = false;
+    });
+});
+
+btnAv1.addEventListener('click', () => {
+    mostrarEtapa(2);
+    document.getElementById('resumo-etapa-2').innerHTML =
+        tag('fas fa-cut', estado.servicoNome) +
+        tag('fas fa-tag', `R$ ${estado.servicoPreco}`);
+});
+
+// ══════════════════════════════════
+//  ETAPA 2 — Data
+// ══════════════════════════════════
+const selData  = document.getElementById('sel-data');
+const btnAv2   = document.getElementById('btn-avancar-2');
+
+(function limitarData() {
+    const hoje = new Date(), max = new Date();
+    max.setDate(max.getDate() + 30);
+    const fmt = d => d.toISOString().split('T')[0];
+    selData.min = fmt(hoje);
+    selData.max = fmt(max);
+})();
+
+selData.addEventListener('change', () => {
+    btnAv2.disabled = !selData.value;
+    if (selData.value) {
+        estado.data        = selData.value;
+        estado.dataDisplay = fmtData(selData.value);
+    }
+});
+
+btnAv2.addEventListener('click', () => {
+    mostrarEtapa(3);
+    document.getElementById('resumo-etapa-3').innerHTML =
+        tag('fas fa-cut', estado.servicoNome) +
+        tag('fas fa-calendar-day', estado.dataDisplay);
+    carregarBarbeiros();
+});
+
+document.getElementById('btn-voltar-2').addEventListener('click', () => mostrarEtapa(1));
+
+// ══════════════════════════════════
+//  ETAPA 3 — Barbeiros via AJAX
+// ══════════════════════════════════
+const barbeirosGrid = document.getElementById('barbeiros-grid');
+const msgBarbeiros  = document.getElementById('msg-barbeiros');
+const btnAv3        = document.getElementById('btn-avancar-3');
+
+async function carregarBarbeiros() {
+    estado.barbId = null; estado.barbNome = null;
+    btnAv3.disabled = true;
+    barbeirosGrid.innerHTML = '';
+    msgBarbeiros.style.display = 'flex';
+    msgBarbeiros.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando barbeiros disponíveis…';
+
+    try {
+        const res  = await fetch(`${BARBEIROS_URL}?data=${estado.data}`);
+        const json = await res.json();
+        msgBarbeiros.style.display = 'none';
+
+        if (!json.barbeiros?.length) {
+            msgBarbeiros.style.display = 'flex';
+            msgBarbeiros.innerHTML = '<i class="fas fa-moon"></i> Nenhum barbeiro disponível neste dia. Volte e escolha outra data.';
+            return;
+        }
+
+        json.barbeiros.forEach(b => {
+            const card = document.createElement('div');
+            card.className = 'barbeiro-card';
+            card.innerHTML = `
+                <div class="servico-check"><i class="fas fa-check"></i></div>
+                <div class="barbeiro-avatar"><i class="fas fa-user-tie"></i></div>
+                <div class="barbeiro-nome">${b.nome}</div>`;
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.barbeiro-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                estado.barbId   = b.id;
+                estado.barbNome = b.nome;
+                btnAv3.disabled = false;
+            });
+            barbeirosGrid.appendChild(card);
         });
-    </script>
+    } catch {
+        msgBarbeiros.style.display = 'flex';
+        msgBarbeiros.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Erro ao buscar barbeiros.';
+    }
+}
+
+btnAv3.addEventListener('click', () => {
+    mostrarEtapa(4);
+    document.getElementById('resumo-etapa-4').innerHTML =
+        tag('fas fa-cut',          estado.servicoNome) +
+        tag('fas fa-user-tie',     estado.barbNome) +
+        tag('fas fa-calendar-day', estado.dataDisplay);
+    carregarHorarios();
+});
+
+document.getElementById('btn-voltar-3').addEventListener('click', () => mostrarEtapa(2));
+
+// ══════════════════════════════════
+//  ETAPA 4 — Horários via AJAX
+// ══════════════════════════════════
+const horariosGrid  = document.getElementById('horarios-grid');
+const msgHorarios   = document.getElementById('msg-horarios');
+const horarioInput  = document.getElementById('horario-selecionado');
+const btnAv4        = document.getElementById('btn-avancar-4');
+
+async function carregarHorarios() {
+    estado.hora = null;
+    btnAv4.disabled = true;
+    horariosGrid.innerHTML = '';
+    msgHorarios.style.display = 'flex';
+    msgHorarios.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando horários disponíveis…';
+
+    try {
+        const params = new URLSearchParams({
+            barbeiro_id: estado.barbId,
+            data:        estado.data,
+            servico_id:  estado.servicoId,
+        });
+        const res  = await fetch(`${HORARIOS_URL}?${params}`);
+        const json = await res.json();
+        msgHorarios.style.display = 'none';
+        horariosGrid.innerHTML    = '';
+
+        if (json.folga || !json.horarios?.length) {
+            msgHorarios.style.display = 'flex';
+            msgHorarios.innerHTML = json.folga
+                ? '<i class="fas fa-moon"></i> O barbeiro está de folga neste dia.'
+                : '<i class="fas fa-calendar-times"></i> Nenhum horário livre nesta data.';
+            return;
+        }
+
+        json.horarios.forEach(h => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'horario-btn';
+            btn.textContent = h;
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.horario-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                estado.hora = h;
+                horarioInput.value = h;
+                btnAv4.disabled = false;
+            });
+            horariosGrid.appendChild(btn);
+        });
+    } catch {
+        msgHorarios.style.display = 'flex';
+        msgHorarios.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Erro ao buscar horários.';
+    }
+}
+
+btnAv4.addEventListener('click', () => {
+    mostrarEtapa(5);
+    document.getElementById('conf-servico').textContent  = estado.servicoNome;
+    document.getElementById('conf-preco').textContent    = `R$ ${estado.servicoPreco}`;
+    document.getElementById('conf-barbeiro').textContent = estado.barbNome;
+    document.getElementById('conf-data').textContent     = estado.dataDisplay;
+    document.getElementById('conf-hora').textContent     = estado.hora;
+    document.getElementById('f-servico').value  = estado.servicoId;
+    document.getElementById('f-barbeiro').value = estado.barbId;
+    document.getElementById('f-data').value     = estado.data;
+    document.getElementById('f-horario').value  = estado.hora;
+});
+
+document.getElementById('btn-voltar-4').addEventListener('click', () => mostrarEtapa(3));
+document.getElementById('btn-voltar-5').addEventListener('click', () => mostrarEtapa(4));
+</script>
 </body>
 </html>
