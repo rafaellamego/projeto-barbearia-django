@@ -832,7 +832,8 @@ def agendamentos_stream(request):
         # Heartbeat inicial para confirmar conexão
         yield 'event: ping\ndata: ok\n\n'
 
-        while True:
+        inicio = time.time()
+        while time.time() - inicio < 1800:
             time.sleep(3)
             try:
                 atual = _status_snapshot(usuario_id)
@@ -852,6 +853,8 @@ def agendamentos_stream(request):
                 payload = json.dumps(mudancas)
                 yield f'event: status_update\ndata: {payload}\n\n'
                 anterior = atual
+            else:
+                yield ': ping\n\n'
 
     response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
     response['Cache-Control'] = 'no-cache'
@@ -917,7 +920,8 @@ def barbeiro_kanban_stream(request):
         anterior = _kanban_snapshot(barbeiro_id)
         yield 'event: ping\ndata: ok\n\n'
 
-        while True:
+        inicio = time.time()
+        while time.time() - inicio < 1800:
             time.sleep(3)
             try:
                 atual = _kanban_snapshot(barbeiro_id)
@@ -953,6 +957,8 @@ def barbeiro_kanban_stream(request):
                 payload = json.dumps(eventos)
                 yield f'event: kanban_update\ndata: {payload}\n\n'
                 anterior = atual
+            else:
+                yield ': ping\n\n'
 
     response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
     response['Cache-Control'] = 'no-cache'

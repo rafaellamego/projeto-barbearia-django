@@ -36,7 +36,7 @@ services:
       - .env
     command: >
       sh -c "python manage.py migrate --noinput &&
-             gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 60 barbearia.wsgi:application"
+             gunicorn --bind 0.0.0.0:8000 --workers 2 --worker-class gthread --threads 25 --timeout 120 barbearia.wsgi:application"
     ports:
       # O nginx da VM escuta na porta 80 e repassa para ca.
       # O bind em 127.0.0.1 impede que alguem alcance o gunicorn direto pela 8000.
