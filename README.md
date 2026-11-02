@@ -115,8 +115,8 @@ O servidor tem um **banco próprio**, separado dos dados de teste. Nunca rode `l
 
 ## 📸 Demonstração do Sistema
 
-### Tela de Login (Cliente / Barbeiro)
+### Tela de Cadastro (Usuário)
 <img width="1804" height="952" alt="image" src="https://github.com/user-attachments/assets/60393bc7-eecc-4fbe-b4da-32f1c7d40449" />
 
-### Tela de Cadastro (Usuário)
+### Tela de Login (Cliente / Barbeiro)
 <img width="1806" height="955" alt="image" src="https://github.com/user-attachments/assets/7724c549-71b0-4fac-961f-067f954dcdb4" />
